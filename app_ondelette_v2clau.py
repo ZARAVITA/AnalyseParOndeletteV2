@@ -64,51 +64,37 @@ Cette application effectue une analyse vibratoire complète en utilisant la tran
 @st.cache_data(ttl=3600)  # Cache pendant 1 heure
 @st.cache_data(ttl=3600)
 def load_bearing_data():
-    """Charge les données de roulements avec gestion d'erreurs améliorée"""
-    # Données par défaut étendues
-    default_data = {
-        'Manufacturer': ['SKF', 'SKF', 'SKF', 'FAG', 'FAG', 'NSK', 'NSK', 'TIMKEN', 'TIMKEN', 'NTN',
-                        'AMI', 'AMI', 'DODGE', 'DODGE', 'FAFNIR', 'FAFNIR', 'KOYO', 'KOYO', 
-                        'SEALMASTER', 'SNR', 'SNR', 'TORRINGTON', 'TORRINGTON'],
-        'Name': ['6205', '6206', '6207', '6305', '6306', '6005', '6006', '30205', '30206', '6305',
-                '201', '202', 'P2B5__USAF115TTAH (B)', 'P2B5__USAF115TTAH (C)', '206NPP', 
-                '206NPPA1849', '7304B (B)', '7304B (C)', '204', '6316ZZ (B)', 'NU324', '23172B', '23172BW33C08BR'],
-        'Number of Rollers': [9, 9, 9, 8, 8, 9, 9, 13, 13, 8,
-                             8, 8, 18, 17, 9, 9, 9, 9, 21, 8, 13, 22, 22],
-        'FTF': [0.4, 0.4, 0.4, 0.38, 0.38, 0.42, 0.42, 0.39, 0.39, 0.38,
-               0.383, 0.383, 0.42, 0.57, 0.39, 0.39, 0.38, 0.38, 0.4404, 0.38, 0.4, 0.44, 0.44],
-        'BSF': [2.37, 2.37, 2.37, 2.08, 2.08, 2.54, 2.54, 2.69, 2.69, 2.08,
-               2.025, 2.025, 3.22, 6.49, 2.31, 2.31, 1.79, 1.79, 7.296, 2.07, 2.42, 4.16, 4.16],
-        'BPFO': [3.6, 3.6, 3.6, 3.05, 3.05, 3.81, 3.81, 4.94, 4.94, 3.05,
-                3.066, 3.066, 7.65, 7.24, 3.56, 3.56, 3.47, 3.46, 9.2496, 3.08, 5.21, 9.71, 9.71],
-        'BPFI': [5.4, 5.4, 5.4, 4.95, 4.95, 5.19, 5.19, 8.06, 8.06, 4.95,
-                4.934, 4.934, 10.34, 9.75, 5.43, 5.43, 5.53, 5.53, 11.7504, 4.91, 7.78, 12.28, 12.28]
-    }
-    
+    url = "https://github.com/ZARAVITA/analyse_vibratoire_app/raw/main/Bearing%20data%20Base.xlsx"
     try:
-        # CORRECTION : Utiliser la bonne URL et lire directement comme Excel
-        url = "https://github.com/ZARAVITA/analyse_vibratoire_app/raw/main/Bearing%20data%20Base.xlsx"
-        response = requests.get(url, timeout=10)
+        response = requests.get(url)
         response.raise_for_status()
-        
-        # CORRECTION : Lire directement comme Excel sans essayer CSV
         bearing_data = pd.read_excel(BytesIO(response.content))
-        
-        # Nettoyage des données
-        bearing_data = bearing_data.dropna(subset=['Manufacturer'])
-        bearing_data['Manufacturer'] = bearing_data['Manufacturer'].astype(str).str.strip()
-        
+        # Nettoyage agressif
+        bearing_data = bearing_data.dropna(subset=['Manufacturer'])  # Supprime les NaN
+        bearing_data['Manufacturer'] = bearing_data['Manufacturer'].astype(str).str.strip()  # Nettoie les strings
+        #bearing_data['BPFI'] = pd.to_numeric(bearing_data['FTF','BSF','BPFO', 'BPFI'], errors='coerce')
         for col in ['FTF', 'BSF', 'BPFO', 'BPFI']:
-            if col in bearing_data.columns:
-                bearing_data[col] = pd.to_numeric(bearing_data[col], errors='coerce')
-        
+               bearing_data[col] = pd.to_numeric(bearing_data[col], errors='coerce')
         bearing_data = bearing_data.dropna(subset=['FTF','BSF','BPFO', 'BPFI'])
-        
-        st.success("✅ Données de roulements chargées depuis GitHub")
         return bearing_data
-        
-    except Exception as e:
-        st.warning(f"⚠️ Impossible de charger depuis GitHub ({str(e)}). Utilisation des données par défaut.")
+    except:
+        # Données par défaut si le chargement échoue
+        default_data = {
+            'Manufacturer': ['AMI', 'AMI', 'DODGE', 'DODGE', 'FAFNIR', 'FAFNIR', 'KOYO', 'KOYO', 
+                            'SEALMASTER', 'SKF', 'SKF', 'SNR', 'SNR', 'TORRINGTON', 'TORRINGTON'],
+            'Name': ['201', '202', 'P2B5__USAF115TTAH (B)', 'P2B5__USAF115TTAH (C)', '206NPP', 
+                    '206NPPA1849', '7304B (B)', '7304B (C)', '204', '214 (A)', '205 (A)', 
+                    '6316ZZ (B)', 'NU324', '23172B', '23172BW33C08BR'],
+            'Number of Rollers': [8, 8, 18, 17, 9, 9, 9, 9, 21, 15, 13, 8, 13, 22, 22],
+            'FTF': [0.383, 0.383, 0.42, 0.57, 0.39, 0.39, 0.38, 0.38, 0.4404, 0.41, 0.42, 
+                   0.38, 0.4, 0.44, 0.44],
+            'BSF': [2.025, 2.025, 3.22, 6.49, 2.31, 2.31, 1.79, 1.79, 7.296, 2.7, 2.36, 
+                   2.07, 2.42, 4.16, 4.16],
+            'BPFO': [3.066, 3.066, 7.65, 7.24, 3.56, 3.56, 3.47, 3.46, 9.2496, 6.15, 5.47, 
+                    3.08, 5.21, 9.71, 9.71],
+            'BPFI': [4.934, 4.934, 10.34, 9.75, 5.43, 5.43, 5.53, 5.53, 11.7504, 8.84, 7.52, 
+                    4.91, 7.78, 12.28, 12.28]
+        }
         return pd.DataFrame(default_data)
 
 
