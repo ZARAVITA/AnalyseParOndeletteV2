@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from scipy.signal import butter, filtfilt, welch, get_window  # Correction ici
+from scipy.signal import butter, filtfilt, welch, get_window
 from scipy.stats import kurtosis, skew
 import pywt
 import requests
@@ -183,7 +183,7 @@ def create_enhanced_figure(x, y, title, x_title, y_title, stats=None):
 
 def apply_hanning_window(signal):
     """Applique une fenêtre de Hanning au signal"""
-    window = get_window('hann', len(signal))  # Correction ici
+    window = get_window('hann', len(signal))
     return signal * window
 
 def calculate_fft(signal, fs, apply_window=True):
@@ -247,30 +247,6 @@ def create_sidebar():
     for freq_type, freq_val in frequencies.items():
         st.sidebar.markdown(f"{colors[freq_type]} **{freq_type}:** {freq_val:.2f} Hz")
     
-    # Options d'affichage améliorées
-    st.sidebar.subheader("🎨 Options d'Affichage")
-    display_options = {}
-    
-    col1, col2 = st.sidebar.columns(2)
-    with col1:
-        display_options['FTF'] = st.checkbox("FTF", False)
-        display_options['BPFO'] = st.checkbox("BPFO", True)
-    
-    with col2:
-        display_options['BSF'] = st.checkbox("BSF", False)
-        display_options['BPFI'] = st.checkbox("BPFI", True)
-    
-    display_options['harmonics'] = st.checkbox("Harmoniques", False)
-    if display_options['harmonics']:
-        display_options['harmonics_count'] = st.slider("Nombre d'harmoniques", 1, 10, 3)
-    
-    # Options d'affichage des harmoniques de vitesse
-    st.sidebar.subheader("🔄 Harmoniques de Vitesse")
-    display_options['show_speed_harmonics'] = st.checkbox("Afficher les harmoniques de vitesse", False)
-    if display_options['show_speed_harmonics']:
-        display_options['speed_harmonics_count'] = st.slider("Nombre d'harmoniques de vitesse", 1, 10, 3)
-        display_options['speed_harmonics_color'] = st.color_picker("Couleur des harmoniques", "#FFA500")
-    
     # Paramètres des filtres avec validation
     st.sidebar.subheader("🔧 Paramètres de Filtrage")
     filter_params = {
@@ -292,12 +268,12 @@ def create_sidebar():
         'scale_step': st.sidebar.number_input("Pas", 1, 10, 2)
     }
     
-    return selected_bearing, frequencies, display_options, filter_params, wavelet_params
+    return selected_bearing, frequencies, filter_params, wavelet_params, rotation_speed_hz
 
 # Interface principale
 def main():
     # Création de la sidebar
-    bearing_info, frequencies, display_opts, filter_params, wavelet_params = create_sidebar()
+    bearing_info, frequencies, filter_params, wavelet_params, rotation_speed_hz = create_sidebar()
     
     # Zone principale
     uploaded_file = st.file_uploader(
@@ -475,7 +451,34 @@ def main():
                     
                     st.dataframe(comparison_df)
                     
-                    # Nouvelle section: Spectre du signal traité
+                    ########################################################################
+                    # OPTIONS D'AFFICHAGE DÉPLACÉES DANS LA SECTION TRAITEMENT
+                    ########################################################################
+                    st.subheader("🎨 Options d'Affichage du Spectre")
+                    
+                    # Options pour les fréquences caractéristiques
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        show_ftf = st.checkbox("Afficher FTF", False, key='ftf_option')
+                        show_bpfo = st.checkbox("Afficher BPFO", True, key='bpfo_option')
+                    with col2:
+                        show_bsf = st.checkbox("Afficher BSF", False, key='bsf_option')
+                        show_bpfi = st.checkbox("Afficher BPFI", True, key='bpfi_option')
+                    
+                    # Options pour les harmoniques
+                    show_harmonics = st.checkbox("Afficher les Harmoniques", False)
+                    if show_harmonics:
+                        harmonics_count = st.slider("Nombre d'harmoniques", 1, 10, 3)
+                    
+                    # Options pour les harmoniques de vitesse
+                    show_speed_harmonics = st.checkbox("Afficher les Harmoniques de Vitesse", False)
+                    if show_speed_harmonics:
+                        speed_harmonics_count = st.slider("Nombre d'harmoniques de vitesse", 1, 10, 3)
+                        speed_harmonics_color = st.color_picker("Couleur des harmoniques", "#FFA500")
+                    
+                    ########################################################################
+                    # SPECTRE DU SIGNAL TRAITÉ AVEC LES OPTIONS D'AFFICHAGE
+                    ########################################################################
                     st.subheader("📈 Spectre du Signal Traité")
                     
                     # Calcul de la FFT avec fenêtre de Hanning
@@ -499,8 +502,15 @@ def main():
                     }
                     
                     # Ajout des fréquences caractéristiques si sélectionnées
-                    for freq_type, show in display_opts.items():
-                        if freq_type in frequencies and show:
+                    freq_to_show = {
+                        'FTF': show_ftf,
+                        'BSF': show_bsf,
+                        'BPFO': show_bpfo,
+                        'BPFI': show_bpfi
+                    }
+                    
+                    for freq_type, show in freq_to_show.items():
+                        if show and freq_type in frequencies:
                             freq_val = frequencies[freq_type]
                             
                             # Ajout de la fréquence fondamentale
@@ -513,8 +523,8 @@ def main():
                             )
                             
                             # Ajout des harmoniques si activé
-                            if display_opts.get('harmonics', False):
-                                for h in range(2, display_opts.get('harmonics_count', 3) + 1):
+                            if show_harmonics:
+                                for h in range(2, harmonics_count + 1):
                                     fig_fft_proc.add_vline(
                                         x=freq_val * h,
                                         line_dash="dot",
@@ -524,16 +534,13 @@ def main():
                                     )
                     
                     # Ajout des harmoniques de vitesse si activé
-                    if display_opts.get('show_speed_harmonics', False):
-                        rotation_speed_hz = bearing_info['FTF'] * frequencies['FTF'] / bearing_info['FTF']
-                        speed_color = display_opts.get('speed_harmonics_color', "#FFA500")
-                        
-                        for h in range(1, display_opts.get('speed_harmonics_count', 3) + 1):
+                    if show_speed_harmonics:
+                        for h in range(1, speed_harmonics_count + 1):
                             harmonic_freq = h * rotation_speed_hz
                             fig_fft_proc.add_vline(
                                 x=harmonic_freq,
                                 line_dash="dash",
-                                line_color=speed_color,
+                                line_color=speed_harmonics_color,
                                 annotation_text=f"{h}×Vitesse",
                                 annotation_position="bottom right"
                             )
@@ -583,34 +590,6 @@ def main():
                                 colorbar=dict(title="Amplitude (dB)"),
                                 hoverongaps=False
                             ))
-                            
-                            # Ajout des fréquences caractéristiques
-                            freq_colors = {
-                                'FTF': 'violet', 'BSF': 'green', 
-                                'BPFO': 'blue', 'BPFI': 'red'
-                            }
-                            
-                            for freq_type, show in display_opts.items():
-                                if freq_type in frequencies and show:
-                                    freq_val = frequencies[freq_type]
-                                    
-                                    # Ligne principale
-                                    fig_cwt.add_hline(
-                                        y=freq_val,
-                                        line=dict(color=freq_colors[freq_type], width=2, dash='dot'),
-                                        annotation_text=freq_type,
-                                        annotation_position="right"
-                                    )
-                                    
-                                    # Harmoniques
-                                    if display_opts.get('harmonics', False):
-                                        for h in range(2, display_opts.get('harmonics_count', 3) + 1):
-                                            fig_cwt.add_hline(
-                                                y=freq_val * h,
-                                                line=dict(color=freq_colors[freq_type], width=1, dash='dot'),
-                                                annotation_text=f"{h}×{freq_type}",
-                                                annotation_position="right"
-                                            )
                             
                             fig_cwt.update_layout(
                                 title="Scalogramme - Transformée en Ondelettes Continue",
