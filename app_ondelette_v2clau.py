@@ -72,13 +72,6 @@ def load_bearing_data():
     
     for i, url in enumerate(urls):
         try:
-            st.info(f"🔄 Tentative de chargement {i+1}/3: {url}")
-            
-            # Configuration de la requête avec headers
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-            
             response = requests.get(url, headers=headers, timeout=30)
             response.raise_for_status()
             
