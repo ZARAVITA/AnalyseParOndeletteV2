@@ -64,7 +64,7 @@ Cette application effectue une analyse vibratoire complète en utilisant la tran
 @st.cache_data(ttl=3600)  # Cache pendant 1 heure
 @st.cache_data(ttl=3600)
 def load_bearing_data():
-    url = "https://github.com/ZARAVITA/analyse_vibratoire_app/raw/main/Bearing%20data%20Base.xlsx"
+    url = "https://github.com/ZARAVITA/AnalyseParOndeletteV2/blob/main/Bearing%20data%20Base.xlsx"
     try:
         response = requests.get(url)
         response.raise_for_status()
