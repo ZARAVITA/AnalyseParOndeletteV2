@@ -97,7 +97,7 @@ def load_bearing_data():
         }
         return pd.DataFrame(default_data)
 
-
+bearing_data = load_bearing_data()
 # Fonctions de traitement du signal améliorées
 def advanced_signal_stats(signal):
     """Calcule des statistiques avancées du signal"""
@@ -187,7 +187,7 @@ def create_sidebar():
     
     # Chargement des données
     with st.sidebar.expander("📊 Base de Données", expanded=True):
-        bearing_data = load_bearing_data()
+        #bearing_data = load_bearing_data()
         st.info(f"**{len(bearing_data)}** roulements disponibles")
     
     # Sélection du roulement avec validation
