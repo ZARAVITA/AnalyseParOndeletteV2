@@ -86,7 +86,7 @@ def load_bearing_data():
     
     try:
         # Tentative de chargement depuis GitHub
-        url = "https://github.com/ZARAVITA/AnalyseParOndeletteV2/blob/main/Bearing%20data%20Base.xlsx"
+        url = "https://raw.githubusercontent.com/ZARAVITA/Analyse_vibratoire_par_ondelettes/main/Bearing%20data%20Base.csv"
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         
@@ -427,26 +427,20 @@ def main():
                     st.dataframe(comparison_df)
                     
                     ########################################################################
-                    # NOUVELLE SECTION: PERSONNALISATION DE L'ANALYSE SPECTRALE
+                    # SECTION: OPTIONS D'AFFICHAGE DU SPECTRE
                     ########################################################################
-                    st.subheader("🎯 Paramètres d'Analyse Spectrale")
+                    st.subheader("🎯 Options d'Affichage du Spectre")
                     
                     # Entrée personnalisée pour la vitesse de rotation
-                    col1, col2 = st.columns([2, 1])
-                    with col1:
-                        custom_rpm = st.number_input(
-                            "Vitesse de rotation personnalisée (RPM)",
-                            min_value=1,
-                            max_value=10000,
-                            value=1000,
-                            step=10
-                        )
-                    
-                    with col2:
-                        st.write("")
-                        st.write("")
-                        custom_hz = custom_rpm / 60
-                        st.metric("Fréquence de rotation", f"{custom_hz:.2f} Hz")
+                    custom_rpm = st.number_input(
+                        "Vitesse de rotation personnalisée (RPM)",
+                        min_value=1,
+                        max_value=10000,
+                        value=1000,
+                        step=10
+                    )
+                    custom_hz = custom_rpm / 60
+                    st.info(f"**Fréquence de rotation calculée:** {custom_hz:.2f} Hz")
                     
                     # Calcul des fréquences caractéristiques personnalisées
                     frequencies = {
@@ -456,10 +450,8 @@ def main():
                         'BPFI': bearing_info['BPFI'] * custom_hz
                     }
                     
-                    # Sélection des fréquences à afficher
-                    st.subheader("🔍 Options d'Affichage des Fréquences")
-                    
-                    # Affichage sur une seule ligne avec 4 colonnes
+                    # Sélection des fréquences à afficher - SUR UNE SEULE LIGNE
+                    st.write("**Sélectionnez les fréquences à afficher:**")
                     col1, col2, col3, col4 = st.columns(4)
                     with col1:
                         show_ftf = st.checkbox("FTF", True, key='ftf_spectrum')
@@ -470,14 +462,14 @@ def main():
                     with col4:
                         show_bpfi = st.checkbox("BPFI", True, key='bpfi_spectrum')
                     
-                    # Options pour les harmoniques
+                    # Options pour les harmoniques - APRÈS LA SÉLECTION DES FRÉQUENCES
                     st.subheader("📐 Options des Harmoniques")
                     
-                    show_harmonics = st.checkbox("Afficher les Harmoniques des Fréquences Caractéristiques", False)
+                    show_harmonics = st.checkbox("Afficher les harmoniques des fréquences caractéristiques", False)
                     if show_harmonics:
-                        harmonics_count = st.slider("Nombre d'harmoniques", 1, 10, 3)
+                        harmonics_count = st.slider("Nombre d'harmoniques à afficher", 1, 10, 3)
                     
-                    show_speed_harmonics = st.checkbox("Afficher les Harmoniques de Vitesse", False)
+                    show_speed_harmonics = st.checkbox("Afficher les harmoniques de vitesse", False)
                     if show_speed_harmonics:
                         speed_harmonics_count = st.slider("Nombre d'harmoniques de vitesse", 1, 10, 3)
                         speed_harmonics_color = st.color_picker("Couleur des harmoniques de vitesse", "#FFA500")
