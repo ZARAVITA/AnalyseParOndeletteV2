@@ -86,7 +86,7 @@ def load_bearing_data():
     
     try:
         # Tentative de chargement depuis GitHub
-        url = "https://raw.githubusercontent.com/ZARAVITA/Analyse_vibratoire_par_ondelettes/main/Bearing%20data%20Base.csv"
+        url = "https://github.com/ZARAVITA/AnalyseParOndeletteV2/blob/main/Bearing%20data%20Base.xlsx"
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         
