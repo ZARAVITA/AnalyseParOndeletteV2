@@ -530,14 +530,14 @@ def main():
                     
                     # Entrée personnalisée pour la vitesse de rotation
                     custom_rpm = st.number_input(
-                        "Vitesse de rotation personnalisée (RPM)",
+                        "Fréquence de rotation personnalisée (RPM,Hz)",
                         min_value=1,
-                        max_value=10000,
-                        value=1000,
-                        step=10
+                        max_value=5000,
+                        value=16.67,
+                        step=0.01
                     )
                     custom_hz = custom_rpm / 60
-                    st.info(f"**Fréquence de rotation calculée:** {custom_hz:.2f} Hz")
+                    #st.info(f"**Fréquence de rotation calculée:** {custom_hz:.2f} Hz")
                     
                     # Calcul des fréquences caractéristiques personnalisées
                     frequencies = {
