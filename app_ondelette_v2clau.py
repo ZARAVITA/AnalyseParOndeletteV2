@@ -222,31 +222,6 @@ def create_sidebar():
     roller_count = selected_bearing['Number of Rollers']
     st.sidebar.success(f"**Rouleaux:** {roller_count}")
     
-    # Vitesse avec validation
-    st.sidebar.subheader("🔄 Conditions de Fonctionnement")
-    rotation_speed_rpm = st.sidebar.number_input(
-        "Vitesse (RPM)", 
-        min_value=1, max_value=10000, value=1000, step=10
-    )
-    rotation_speed_hz = rotation_speed_rpm / 60
-    
-    st.sidebar.info(f"**Fréquence:** {rotation_speed_hz:.2f} Hz")
-    
-    # Calcul des fréquences caractéristiques
-    frequencies = {
-        'FTF': selected_bearing['FTF'] * rotation_speed_hz,
-        'BSF': selected_bearing['BSF'] * rotation_speed_hz,
-        'BPFO': selected_bearing['BPFO'] * rotation_speed_hz,
-        'BPFI': selected_bearing['BPFI'] * rotation_speed_hz
-    }
-    
-    # Affichage des fréquences avec codes couleur
-    st.sidebar.subheader("📊 Fréquences Caractéristiques")
-    colors = {'FTF': '🟣', 'BSF': '🟢', 'BPFO': '🔵', 'BPFI': '🔴'}
-    
-    for freq_type, freq_val in frequencies.items():
-        st.sidebar.markdown(f"{colors[freq_type]} **{freq_type}:** {freq_val:.2f} Hz")
-    
     # Paramètres des filtres avec validation
     st.sidebar.subheader("🔧 Paramètres de Filtrage")
     filter_params = {
@@ -268,12 +243,12 @@ def create_sidebar():
         'scale_step': st.sidebar.number_input("Pas", 1, 10, 2)
     }
     
-    return selected_bearing, frequencies, filter_params, wavelet_params, rotation_speed_hz
+    return selected_bearing, filter_params, wavelet_params
 
 # Interface principale
 def main():
     # Création de la sidebar
-    bearing_info, frequencies, filter_params, wavelet_params, rotation_speed_hz = create_sidebar()
+    bearing_info, filter_params, wavelet_params = create_sidebar()
     
     # Zone principale
     uploaded_file = st.file_uploader(
@@ -451,21 +426,65 @@ def main():
                     
                     st.dataframe(comparison_df)
                     
-                    # SECTION AJOUTÉE: Options d'affichage des harmoniques
-                    st.subheader("🎯 Options d'Affichage pour l'Analyse Spectrale")
+                    ########################################################################
+                    # NOUVELLE SECTION: PERSONNALISATION DE L'ANALYSE SPECTRALE
+                    ########################################################################
+                    st.subheader("🎯 Paramètres d'Analyse Spectrale")
+                    
+                    # Entrée personnalisée pour la vitesse de rotation
+                    col1, col2 = st.columns([2, 1])
+                    with col1:
+                        custom_rpm = st.number_input(
+                            "Vitesse de rotation personnalisée (RPM)",
+                            min_value=1,
+                            max_value=10000,
+                            value=1000,
+                            step=10
+                        )
+                    
+                    with col2:
+                        st.write("")
+                        st.write("")
+                        custom_hz = custom_rpm / 60
+                        st.metric("Fréquence de rotation", f"{custom_hz:.2f} Hz")
+                    
+                    # Calcul des fréquences caractéristiques personnalisées
+                    frequencies = {
+                        'FTF': bearing_info['FTF'] * custom_hz,
+                        'BSF': bearing_info['BSF'] * custom_hz,
+                        'BPFO': bearing_info['BPFO'] * custom_hz,
+                        'BPFI': bearing_info['BPFI'] * custom_hz
+                    }
+                    
+                    # Sélection des fréquences à afficher
+                    st.subheader("🔍 Options d'Affichage des Fréquences")
+                    
+                    # Affichage sur une seule ligne avec 4 colonnes
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        show_ftf = st.checkbox("FTF", True, key='ftf_spectrum')
+                    with col2:
+                        show_bsf = st.checkbox("BSF", True, key='bsf_spectrum')
+                    with col3:
+                        show_bpfo = st.checkbox("BPFO", True, key='bpfo_spectrum')
+                    with col4:
+                        show_bpfi = st.checkbox("BPFI", True, key='bpfi_spectrum')
                     
                     # Options pour les harmoniques
+                    st.subheader("📐 Options des Harmoniques")
+                    
                     show_harmonics = st.checkbox("Afficher les Harmoniques des Fréquences Caractéristiques", False)
                     if show_harmonics:
                         harmonics_count = st.slider("Nombre d'harmoniques", 1, 10, 3)
                     
-                    # Options pour les harmoniques de vitesse
-                    show_speed_harmonics = st.checkbox("Afficher les Harmoniques de Vitesse de Rotation", False)
+                    show_speed_harmonics = st.checkbox("Afficher les Harmoniques de Vitesse", False)
                     if show_speed_harmonics:
                         speed_harmonics_count = st.slider("Nombre d'harmoniques de vitesse", 1, 10, 3)
                         speed_harmonics_color = st.color_picker("Couleur des harmoniques de vitesse", "#FFA500")
                     
-                    # Affichage du spectre avec les options sélectionnées
+                    ########################################################################
+                    # SPECTRE DU SIGNAL TRAITÉ AVEC LES OPTIONS PERSONNALISÉES
+                    ########################################################################
                     st.subheader("📈 Spectre du Signal Traité")
                     
                     # Calcul de la FFT avec fenêtre de Hanning
@@ -488,32 +507,83 @@ def main():
                         'BPFI': 'red'
                     }
                     
-                    # Ajout des fréquences caractéristiques
-                    for freq_type, freq_val in frequencies.items():
-                        # Ajout de la fréquence fondamentale
+                    # Ajout des fréquences caractéristiques sélectionnées
+                    if show_ftf:
                         fig_fft_proc.add_vline(
-                            x=freq_val,
+                            x=frequencies['FTF'],
                             line_dash="dash",
-                            line_color=freq_colors[freq_type],
-                            annotation_text=freq_type,
+                            line_color=freq_colors['FTF'],
+                            annotation_text="FTF",
                             annotation_position="top right"
                         )
-                        
-                        # Ajout des harmoniques si activé
                         if show_harmonics:
                             for h in range(2, harmonics_count + 1):
                                 fig_fft_proc.add_vline(
-                                    x=freq_val * h,
+                                    x=frequencies['FTF'] * h,
                                     line_dash="dot",
-                                    line_color=freq_colors[freq_type],
-                                    annotation_text=f"{h}×{freq_type}",
+                                    line_color=freq_colors['FTF'],
+                                    annotation_text=f"{h}×FTF",
+                                    annotation_position="top right"
+                                )
+                    
+                    if show_bsf:
+                        fig_fft_proc.add_vline(
+                            x=frequencies['BSF'],
+                            line_dash="dash",
+                            line_color=freq_colors['BSF'],
+                            annotation_text="BSF",
+                            annotation_position="top right"
+                        )
+                        if show_harmonics:
+                            for h in range(2, harmonics_count + 1):
+                                fig_fft_proc.add_vline(
+                                    x=frequencies['BSF'] * h,
+                                    line_dash="dot",
+                                    line_color=freq_colors['BSF'],
+                                    annotation_text=f"{h}×BSF",
+                                    annotation_position="top right"
+                                )
+                    
+                    if show_bpfo:
+                        fig_fft_proc.add_vline(
+                            x=frequencies['BPFO'],
+                            line_dash="dash",
+                            line_color=freq_colors['BPFO'],
+                            annotation_text="BPFO",
+                            annotation_position="top right"
+                        )
+                        if show_harmonics:
+                            for h in range(2, harmonics_count + 1):
+                                fig_fft_proc.add_vline(
+                                    x=frequencies['BPFO'] * h,
+                                    line_dash="dot",
+                                    line_color=freq_colors['BPFO'],
+                                    annotation_text=f"{h}×BPFO",
+                                    annotation_position="top right"
+                                )
+                    
+                    if show_bpfi:
+                        fig_fft_proc.add_vline(
+                            x=frequencies['BPFI'],
+                            line_dash="dash",
+                            line_color=freq_colors['BPFI'],
+                            annotation_text="BPFI",
+                            annotation_position="top right"
+                        )
+                        if show_harmonics:
+                            for h in range(2, harmonics_count + 1):
+                                fig_fft_proc.add_vline(
+                                    x=frequencies['BPFI'] * h,
+                                    line_dash="dot",
+                                    line_color=freq_colors['BPFI'],
+                                    annotation_text=f"{h}×BPFI",
                                     annotation_position="top right"
                                 )
                     
                     # Ajout des harmoniques de vitesse si activé
                     if show_speed_harmonics:
                         for h in range(1, speed_harmonics_count + 1):
-                            harmonic_freq = h * rotation_speed_hz
+                            harmonic_freq = h * custom_hz
                             fig_fft_proc.add_vline(
                                 x=harmonic_freq,
                                 line_dash="dash",
