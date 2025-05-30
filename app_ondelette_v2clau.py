@@ -62,6 +62,7 @@ Cette application effectue une analyse vibratoire complète en utilisant la tran
 
 # Cache amélioré avec gestion d'erreurs
 @st.cache_data(ttl=3600)  # Cache pendant 1 heure
+""""
 def load_bearing_data():
     # Utilisation du fichier CSV au lieu d'Excel
     url = "https://raw.githubusercontent.com/ZARAVITA/AnalyseParOndeletteV2/refs/heads/main/Bearing%20data%20Base.csv"
@@ -109,6 +110,161 @@ def load_bearing_data():
                     4.91, 7.78, 12.28, 12.28]
         }
         return pd.DataFrame(default_data)
+"""
+#-------------------------------------------------------------------------claude------------------------------------------------------------------------------------
+def load_bearing_data():
+    """Charge les données des roulements depuis GitHub avec gestion d'erreurs robuste"""
+    
+    # URLs alternatives à tester
+    urls = [
+        "https://raw.githubusercontent.com/ZARAVITA/AnalyseParOndeletteV2/main/Bearing%20data%20Base.csv",
+        "https://raw.githubusercontent.com/ZARAVITA/AnalyseParOndeletteV2/refs/heads/main/Bearing%20data%20Base.csv",
+        "https://github.com/ZARAVITA/AnalyseParOndeletteV2/raw/main/Bearing%20data%20Base.csv"
+    ]
+    
+    for i, url in enumerate(urls):
+        try:
+            st.info(f"🔄 Tentative de chargement {i+1}/3: {url}")
+            
+            # Configuration de la requête avec headers
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            
+            response = requests.get(url, headers=headers, timeout=30)
+            response.raise_for_status()
+            
+            # Décodage du contenu
+            content = response.content.decode('utf-8')
+            
+            # Test de différents séparateurs
+            separators = [',', ';', '\t']
+            
+            for sep in separators:
+                try:
+                    # Lecture du CSV avec différents paramètres
+                    bearing_data = pd.read_csv(
+                        BytesIO(response.content), 
+                        sep=sep,
+                        encoding='utf-8',
+                        on_bad_lines='skip'
+                    )
+                    
+                    # Vérification de la structure minimale
+                    if len(bearing_data.columns) >= 5 and len(bearing_data) > 0:
+                        st.success(f"✅ Données chargées avec succès! ({len(bearing_data)} lignes)")
+                        
+                        # Nettoyage des données
+                        bearing_data = bearing_data.dropna(subset=[bearing_data.columns[0]])  # Première colonne non nulle
+                        
+                        # Standardisation des noms de colonnes
+                        expected_cols = ['Manufacturer', 'Name', 'Number of Rollers', 'FTF', 'BSF', 'BPFO', 'BPFI']
+                        if len(bearing_data.columns) >= len(expected_cols):
+                            bearing_data.columns = expected_cols[:len(bearing_data.columns)]
+                        
+                        # Conversion des colonnes numériques
+                        numeric_cols = ['Number of Rollers', 'FTF', 'BSF', 'BPFO', 'BPFI']
+                        for col in numeric_cols:
+                            if col in bearing_data.columns:
+                                bearing_data[col] = pd.to_numeric(bearing_data[col], errors='coerce')
+                        
+                        # Nettoyage final
+                        bearing_data = bearing_data.dropna(subset=['FTF', 'BSF', 'BPFO', 'BPFI'])
+                        
+                        if len(bearing_data) > 0:
+                            return bearing_data
+                
+                except Exception as e:
+                    continue
+            
+        except requests.exceptions.RequestException as e:
+            st.warning(f"⚠️ Échec URL {i+1}: {str(e)}")
+            continue
+        except Exception as e:
+            st.warning(f"⚠️ Erreur URL {i+1}: {str(e)}")
+            continue
+    
+    # Si toutes les tentatives échouent, utiliser les données par défaut
+    st.error("❌ Impossible de charger les données depuis GitHub")
+    st.info("🔄 Utilisation des données par défaut intégrées")
+    
+    # Données par défaut étendues et corrigées
+    default_data = {
+        'Manufacturer': [
+            'SKF', 'SKF', 'SKF', 'SKF', 'SKF',
+            'FAG', 'FAG', 'FAG', 'FAG', 'FAG',
+            'TIMKEN', 'TIMKEN', 'TIMKEN', 'TIMKEN', 'TIMKEN',
+            'NSK', 'NSK', 'NSK', 'NSK', 'NSK',
+            'NTN', 'NTN', 'NTN', 'NTN', 'NTN'
+        ],
+        'Name': [
+            '6206', '6208', '6210', '6306', '6308',
+            '6206', '6208', '6210', '6306', '6308',
+            '6206', '6208', '6210', '6306', '6308',
+            '6206', '6208', '6210', '6306', '6308',
+            '6206', '6208', '6210', '6306', '6308'
+        ],
+        'Number of Rollers': [
+            9, 8, 9, 8, 8,
+            9, 8, 9, 8, 8,
+            9, 8, 9, 8, 8,
+            9, 8, 9, 8, 8,
+            9, 8, 9, 8, 8
+        ],
+        'FTF': [
+            0.398, 0.383, 0.404, 0.382, 0.382,
+            0.398, 0.383, 0.404, 0.382, 0.382,
+            0.398, 0.383, 0.404, 0.382, 0.382,
+            0.398, 0.383, 0.404, 0.382, 0.382,
+            0.398, 0.383, 0.404, 0.382, 0.382
+        ],
+        'BSF': [
+            2.357, 2.027, 2.384, 2.032, 2.032,
+            2.357, 2.027, 2.384, 2.032, 2.032,
+            2.357, 2.027, 2.384, 2.032, 2.032,
+            2.357, 2.027, 2.384, 2.032, 2.032,
+            2.357, 2.027, 2.384, 2.032, 2.032
+        ],
+        'BPFO': [
+            3.581, 3.052, 3.634, 3.053, 3.053,
+            3.581, 3.052, 3.634, 3.053, 3.053,
+            3.581, 3.052, 3.634, 3.053, 3.053,
+            3.581, 3.052, 3.634, 3.053, 3.053,
+            3.581, 3.052, 3.634, 3.053, 3.053
+        ],
+        'BPFI': [
+            5.419, 4.948, 5.366, 4.947, 4.947,
+            5.419, 4.948, 5.366, 4.947, 4.947,
+            5.419, 4.948, 5.366, 4.947, 4.947,
+            5.419, 4.948, 5.366, 4.947, 4.947,
+            5.419, 4.948, 5.366, 4.947, 4.947
+        ]
+    }
+    
+    return pd.DataFrame(default_data)
+
+# Test de connexion initial
+def test_github_connection():
+    """Test la connexion à GitHub"""
+    try:
+        response = requests.get("https://github.com", timeout=5)
+        return response.status_code == 200
+    except:
+        return False
+
+# Affichage du statut de connexion
+with st.sidebar:
+    if test_github_connection():
+        st.success("🌐 Connexion GitHub OK")
+    else:
+        st.warning("⚠️ Connexion GitHub limitée")
+
+# Charger les données des roulements avec feedback utilisateur
+with st.spinner("🔄 Chargement des données des roulements..."):
+    bearing_data = load_bearing_data()
+#------------------------------------------------------------------------------------------------------------------------------------------------------FIN
+
+
 
 # Charger les données des roulements
 bearing_data = load_bearing_data()
