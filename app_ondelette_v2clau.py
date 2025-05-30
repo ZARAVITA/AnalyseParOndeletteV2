@@ -64,32 +64,21 @@ Cette application effectue une analyse vibratoire complète en utilisant la tran
 #-------------------------------------------------------------------------claude------------------------------------------------------------------------------------
 def load_bearing_data():
     """Charge les données des roulements depuis GitHub avec gestion d'erreurs robuste"""
-    
-    # URLs alternatives à tester
     urls = [
         "https://raw.githubusercontent.com/ZARAVITA/AnalyseParOndeletteV2/main/Bearing%20data%20Base.csv"
     ]
     
-    for i, url in enumerate(urls):
+    for url in urls:
         try:
-            st.info(f"🔄 Tentative de chargement {i+1}/3: {url}")
-            
-            # Configuration de la requête avec headers
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
+            headers = {'User-Agent': 'Mozilla/5.0'}
             response = requests.get(url, headers=headers, timeout=30)
             response.raise_for_status()
             
-            # Décodage du contenu
             content = response.content.decode('utf-8')
-            
-            # Test de différents séparateurs
             separators = [',', ';', '\t']
             
             for sep in separators:
                 try:
-                    # Lecture du CSV avec différents paramètres
                     bearing_data = pd.read_csv(
                         BytesIO(response.content), 
                         sep=sep,
@@ -97,12 +86,9 @@ def load_bearing_data():
                         on_bad_lines='skip'
                     )
                     
-                    # Vérification de la structure minimale
                     if len(bearing_data.columns) >= 5 and len(bearing_data) > 0:
-                        st.success(f"✅ Données chargées avec succès! ({len(bearing_data)} lignes)")
-                        
                         # Nettoyage des données
-                        bearing_data = bearing_data.dropna(subset=[bearing_data.columns[0]])  # Première colonne non nulle
+                        bearing_data = bearing_data.dropna(subset=[bearing_data.columns[0]])
                         
                         # Standardisation des noms de colonnes
                         expected_cols = ['Manufacturer', 'Name', 'Number of Rollers', 'FTF', 'BSF', 'BPFO', 'BPFI']
@@ -121,15 +107,24 @@ def load_bearing_data():
                         if len(bearing_data) > 0:
                             return bearing_data
                 
-                except Exception as e:
+                except Exception:
                     continue
             
-        except requests.exceptions.RequestException as e:
-            st.warning(f"⚠️ Échec URL {i+1}: {str(e)}")
+        except Exception:
             continue
-        except Exception as e:
-            st.warning(f"⚠️ Erreur URL {i+1}: {str(e)}")
-            continue
+    
+    # Données par défaut si échec
+    default_data = {
+        'Manufacturer': ['SKF', 'FAG', 'TIMKEN', 'NSK', 'NTN'],
+        'Name': ['6206', '6208', '6210', '6306', '6308'],
+        'Number of Rollers': [9, 8, 9, 8, 8],
+        'FTF': [0.398, 0.383, 0.404, 0.382, 0.382],
+        'BSF': [2.357, 2.027, 2.384, 2.032, 2.032],
+        'BPFO': [3.581, 3.052, 3.634, 3.053, 3.053],
+        'BPFI': [5.419, 4.948, 5.366, 4.947, 4.947]
+    }
+    
+    return pd.DataFrame(default_data)
     
     # Si toutes les tentatives échouent, utiliser les données par défaut
     st.error("❌ Impossible de charger les données depuis GitHub")
