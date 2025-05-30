@@ -60,58 +60,7 @@ Cette application effectue une analyse vibratoire complète en utilisant la tran
 *Développé par **M. A Angelico** et **ZARAVITA** - Version Améliorée*
 """)
 
-# Mise en commentaire de la section spécifiée
-'''
-# Cache amélioré avec gestion d'erreurs (SECTION COMMENTÉE)
-@st.cache_data(ttl=3600)  # Cache pendant 1 heure
-def load_bearing_data():
-    # Utilisation du fichier CSV au lieu d'Excel
-    url = "https://raw.githubusercontent.com/ZARAVITA/AnalyseParOndeletteV2/refs/heads/main/Bearing%20data%20Base.csv"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        
-        # Chargement direct en CSV
-        bearing_data = pd.read_csv(BytesIO(response.content))
-        
-        # Nettoyage agressif
-        bearing_data = bearing_data.dropna(subset=['Manufacturer'])
-        bearing_data['Manufacturer'] = bearing_data['Manufacturer'].astype(str).str.strip()
-        
-        # Conversion des colonnes numériques
-        numeric_cols = ['FTF', 'BSF', 'BPFO', 'BPFI', 'Number of Rollers']
-        for col in numeric_cols:
-            if col in bearing_data.columns:
-                bearing_data[col] = pd.to_numeric(bearing_data[col], errors='coerce')
-        
-        # Suppression des lignes avec valeurs manquantes
-        bearing_data = bearing_data.dropna(subset=['FTF','BSF','BPFO', 'BPFI'])
-        
-        return bearing_data
-    
-    except Exception as e:
-        st.error(f"Erreur de chargement des données: {str(e)}")
-        st.info("Utilisation des données par défaut")
-        
-        # Données par défaut si le chargement échoue
-        default_data = {
-            'Manufacturer': ['AMI', 'AMI', 'DODGE', 'DODGE', 'FAFNIR', 'FAFNIR', 'KOYO', 'KOYO', 
-                            'SEALMASTER', 'SKF', 'SKF', 'SNR', 'SNR', 'TORRINGTON', 'TORRINGTON'],
-            'Name': ['201', '202', 'P2B5__USAF115TTAH (B)', 'P2B5__USAF115TTAH (C)', '206NPP', 
-                    '206NPPA1849', '7304B (B)', '7304B (C)', '204', '214 (A)', '205 (A)', 
-                    '6316ZZ (B)', 'NU324', '23172B', '23172BW33C08BR'],
-            'Number of Rollers': [8, 8, 18, 17, 9, 9, 9, 9, 21, 15, 13, 8, 13, 22, 22],
-            'FTF': [0.383, 0.383, 0.42, 0.57, 0.39, 0.39, 0.38, 0.38, 0.4404, 0.41, 0.42, 
-                   0.38, 0.4, 0.44, 0.44],
-            'BSF': [2.025, 2.025, 3.22, 6.49, 2.31, 2.31, 1.79, 1.79, 7.296, 2.7, 2.36, 
-                   2.07, 2.42, 4.16, 4.16],
-            'BPFO': [3.066, 3.066, 7.65, 7.24, 3.56, 3.56, 3.47, 3.46, 9.2496, 6.15, 5.47, 
-                    3.08, 5.21, 9.71, 9.71],
-            'BPFI': [4.934, 4.934, 10.34, 9.75, 5.43, 5.43, 5.53, 5.53, 11.7504, 8.84, 7.52, 
-                    4.91, 7.78, 12.28, 12.28]
-        }
-        return pd.DataFrame(default_data)
-'''
+
 #-------------------------------------------------------------------------claude------------------------------------------------------------------------------------
 def load_bearing_data():
     """Charge les données des roulements depuis GitHub avec gestion d'erreurs robuste"""
