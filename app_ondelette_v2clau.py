@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from scipy.signal import butter, filtfilt, welch, find_peaks
+from scipy.signal import butter, filtfilt, welch, hann
 from scipy.stats import kurtosis, skew
 import pywt
 import requests
@@ -55,6 +55,7 @@ Cette application effectue une analyse vibratoire complète en utilisant la tran
 - 📈 **Analyse spectrale comparative**
 - 🎯 **Diagnostic automatisé**
 - 📱 **Interface responsive améliorée**
+- 🪟 **Fenêtrage de Hanning** pour les analyses spectrales
 
 *Développé par **M. A Angelico** et **ZARAVITA** - Version Améliorée*
 """)
@@ -85,7 +86,7 @@ def load_bearing_data():
     
     try:
         # Tentative de chargement depuis GitHub
-        url = "https://github.com/ZARAVITA/AnalyseParOndeletteV2/blob/main/Bearing%20data%20Base.csv"
+        url = "https://raw.githubusercontent.com/ZARAVITA/Analyse_vibratoire_par_ondelettes/main/Bearing%20data%20Base.csv"
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         
@@ -126,6 +127,8 @@ def advanced_signal_stats(signal):
 
 def detect_peaks_auto(signal, time, prominence=None):
     """Détection automatique de pics avec prominence adaptative"""
+    from scipy.signal import find_peaks
+    
     if prominence is None:
         prominence = np.std(signal) * 2
     
@@ -177,6 +180,20 @@ def create_enhanced_figure(x, y, title, x_title, y_title, stats=None):
     )
     
     return fig
+
+def apply_hanning_window(signal):
+    """Applique une fenêtre de Hanning au signal"""
+    window = hann(len(signal))
+    return signal * window
+
+def calculate_fft(signal, fs, apply_window=True):
+    """Calcule la FFT du signal avec option de fenêtrage"""
+    n = len(signal)
+    if apply_window:
+        signal = apply_hanning_window(signal)
+    yf = np.fft.fft(signal)
+    xf = np.fft.fftfreq(n, 1/fs)[:n//2]
+    return xf, 2.0/n * np.abs(yf[0:n//2])
 
 # Interface utilisateur améliorée
 def create_sidebar():
@@ -246,6 +263,13 @@ def create_sidebar():
     display_options['harmonics'] = st.checkbox("Harmoniques", False)
     if display_options['harmonics']:
         display_options['harmonics_count'] = st.slider("Nombre d'harmoniques", 1, 10, 3)
+    
+    # Options d'affichage des harmoniques de vitesse
+    st.sidebar.subheader("🔄 Harmoniques de Vitesse")
+    display_options['show_speed_harmonics'] = st.checkbox("Afficher les harmoniques de vitesse", False)
+    if display_options['show_speed_harmonics']:
+        display_options['speed_harmonics_count'] = st.slider("Nombre d'harmoniques de vitesse", 1, 10, 3)
+        display_options['speed_harmonics_color'] = st.color_picker("Couleur des harmoniques", "#FFA500")
     
     # Paramètres des filtres avec validation
     st.sidebar.subheader("🔧 Paramètres de Filtrage")
@@ -351,9 +375,9 @@ def main():
                 
                 st.plotly_chart(fig_orig, use_container_width=True)
                 
-                # Analyse spectrale du signal original
-                if st.checkbox("Afficher l'analyse spectrale"):
-                    freqs_fft, psd = welch(amplitude, fs, nperseg=min(2048, len(amplitude)//4))
+                # Analyse spectrale du signal original avec fenêtre de Hanning
+                if st.checkbox("Afficher l'analyse spectrale (avec fenêtre de Hanning)"):
+                    freqs_fft, psd = welch(amplitude, fs, window='hann', nperseg=min(2048, len(amplitude)//4))
                     
                     fig_fft = go.Figure()
                     fig_fft.add_trace(go.Scatter(
@@ -363,7 +387,7 @@ def main():
                     ))
                     
                     fig_fft.update_layout(
-                        title="Densité Spectrale de Puissance",
+                        title="Densité Spectrale de Puissance (Fenêtre de Hanning)",
                         xaxis_title="Fréquence (Hz)",
                         yaxis_title="PSD (dB/Hz)",
                         height=400
@@ -450,6 +474,78 @@ def main():
                     }, index=stats_orig.keys())
                     
                     st.dataframe(comparison_df)
+                    
+                    # Nouvelle section: Spectre du signal traité
+                    st.subheader("📈 Spectre du Signal Traité")
+                    
+                    # Calcul de la FFT avec fenêtre de Hanning
+                    fft_freq, fft_amp = calculate_fft(signal_processed, fs, apply_window=True)
+                    
+                    # Création du graphique
+                    fig_fft_proc = go.Figure()
+                    fig_fft_proc.add_trace(go.Scatter(
+                        x=fft_freq, 
+                        y=fft_amp,
+                        mode='lines',
+                        name='Spectre FFT'
+                    ))
+                    
+                    # Couleurs pour les fréquences caractéristiques
+                    freq_colors = {
+                        'FTF': 'violet',
+                        'BSF': 'green',
+                        'BPFO': 'blue',
+                        'BPFI': 'red'
+                    }
+                    
+                    # Ajout des fréquences caractéristiques si sélectionnées
+                    for freq_type, show in display_opts.items():
+                        if freq_type in frequencies and show:
+                            freq_val = frequencies[freq_type]
+                            
+                            # Ajout de la fréquence fondamentale
+                            fig_fft_proc.add_vline(
+                                x=freq_val,
+                                line_dash="dash",
+                                line_color=freq_colors[freq_type],
+                                annotation_text=freq_type,
+                                annotation_position="top right"
+                            )
+                            
+                            # Ajout des harmoniques si activé
+                            if display_opts.get('harmonics', False):
+                                for h in range(2, display_opts.get('harmonics_count', 3) + 1):
+                                    fig_fft_proc.add_vline(
+                                        x=freq_val * h,
+                                        line_dash="dot",
+                                        line_color=freq_colors[freq_type],
+                                        annotation_text=f"{h}×{freq_type}",
+                                        annotation_position="top right"
+                                    )
+                    
+                    # Ajout des harmoniques de vitesse si activé
+                    if display_opts.get('show_speed_harmonics', False):
+                        rotation_speed_hz = bearing_info['FTF'] * frequencies['FTF'] / bearing_info['FTF']
+                        speed_color = display_opts.get('speed_harmonics_color', "#FFA500")
+                        
+                        for h in range(1, display_opts.get('speed_harmonics_count', 3) + 1):
+                            harmonic_freq = h * rotation_speed_hz
+                            fig_fft_proc.add_vline(
+                                x=harmonic_freq,
+                                line_dash="dash",
+                                line_color=speed_color,
+                                annotation_text=f"{h}×Vitesse",
+                                annotation_position="bottom right"
+                            )
+                    
+                    fig_fft_proc.update_layout(
+                        title="Spectre FFT du Signal Traité (Fenêtre de Hanning)",
+                        xaxis_title="Fréquence (Hz)",
+                        yaxis_title="Amplitude",
+                        height=500
+                    )
+                    
+                    st.plotly_chart(fig_fft_proc, use_container_width=True)
                     
                 except Exception as e:
                     st.error(f"❌ Erreur lors du traitement: {str(e)}")
