@@ -420,8 +420,8 @@ def main():
                     comparison_df = pd.DataFrame({
                         'Original': [f"{v:.3f}" for v in stats_orig.values()],
                         'Traité': [f"{v:.3f}" for v in stats_proc.values()],
-                        'Amélioration': [f"{((v2-v1)/v1*100):+.1f}%" 
-                                       for v1, v2 in zip(stats_orig.values(), stats_proc.values())]
+                        'Amélioration': [f"{((v2-v1)/v1*100):+.1f}%" if v1 != 0 else 'N/A'
+                                        for v1, v2 in zip(stats_orig.values(), stats_proc.values())]
                     }, index=stats_orig.keys())
                     
                     st.dataframe(comparison_df)
@@ -451,7 +451,7 @@ def main():
                     }
                     
                     # Sélection des fréquences à afficher - SUR UNE SEULE LIGNE
-                    st.write("**Sélectionnez les fréquences à afficher:**")
+                    st.write("**Sélectionnez les fréquences caractéristiques à afficher:**")
                     col1, col2, col3, col4 = st.columns(4)
                     with col1:
                         show_ftf = st.checkbox("FTF", True, key='ftf_spectrum')
