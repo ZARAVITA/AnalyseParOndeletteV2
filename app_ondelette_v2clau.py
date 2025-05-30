@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from scipy.signal import butter, filtfilt, welch, hann
+from scipy.signal import butter, filtfilt, welch, get_window  # Correction ici
 from scipy.stats import kurtosis, skew
 import pywt
 import requests
@@ -183,7 +183,7 @@ def create_enhanced_figure(x, y, title, x_title, y_title, stats=None):
 
 def apply_hanning_window(signal):
     """Applique une fenêtre de Hanning au signal"""
-    window = hann(len(signal))
+    window = get_window('hann', len(signal))  # Correction ici
     return signal * window
 
 def calculate_fft(signal, fs, apply_window=True):
