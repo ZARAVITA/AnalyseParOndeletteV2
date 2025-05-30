@@ -64,7 +64,7 @@ Cette application effectue une analyse vibratoire complète en utilisant la tran
 @st.cache_data(ttl=3600)  # Cache pendant 1 heure
 def load_bearing_data():
     # Utilisation du fichier CSV au lieu d'Excel
-    url = "Bearing data Base.xlsx"
+    url = "https://raw.githubusercontent.com/ZARAVITA/AnalyseParOndeletteV2/refs/heads/main/Bearing%20data%20Base.csv"
     try:
         response = requests.get(url)
         response.raise_for_status()
