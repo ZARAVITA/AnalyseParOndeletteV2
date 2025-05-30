@@ -62,6 +62,7 @@ Cette application effectue une analyse vibratoire complète en utilisant la tran
 
 # Cache amélioré avec gestion d'erreurs
 @st.cache_data(ttl=3600)  # Cache pendant 1 heure
+@st.cache_data(ttl=3600)
 def load_bearing_data():
     """Charge les données de roulements avec gestion d'erreurs améliorée"""
     # Données par défaut étendues
@@ -85,16 +86,13 @@ def load_bearing_data():
     }
     
     try:
-        # Tentative de chargement depuis GitHub
-        url = "https://raw.githubusercontent.com/ZARAVITA/Analyse_vibratoire_par_ondelettes/main/Bearing%20data%20Base.csv"
+        # CORRECTION : Utiliser la bonne URL et lire directement comme Excel
+        url = "https://github.com/ZARAVITA/analyse_vibratoire_app/raw/main/Bearing%20data%20Base.xlsx"
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         
-        # Essayer différents formats
-        try:
-            bearing_data = pd.read_csv(BytesIO(response.content))
-        except:
-            bearing_data = pd.read_excel(BytesIO(response.content))
+        # CORRECTION : Lire directement comme Excel sans essayer CSV
+        bearing_data = pd.read_excel(BytesIO(response.content))
         
         # Nettoyage des données
         bearing_data = bearing_data.dropna(subset=['Manufacturer'])
@@ -112,6 +110,7 @@ def load_bearing_data():
     except Exception as e:
         st.warning(f"⚠️ Impossible de charger depuis GitHub ({str(e)}). Utilisation des données par défaut.")
         return pd.DataFrame(default_data)
+
 
 # Fonctions de traitement du signal améliorées
 def advanced_signal_stats(signal):
