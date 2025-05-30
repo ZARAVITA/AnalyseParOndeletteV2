@@ -62,22 +62,35 @@ Cette application effectue une analyse vibratoire complète en utilisant la tran
 
 # Cache amélioré avec gestion d'erreurs
 @st.cache_data(ttl=3600)  # Cache pendant 1 heure
-@st.cache_data(ttl=3600)
 def load_bearing_data():
-    url = "https://github.com/ZARAVITA/AnalyseParOndeletteV2/blob/main/Bearing%20data%20Base.xlsx"
+    # CORRECTION : URL mise à jour pour pointer vers le fichier brut
+    url = "https://github.com/ZARAVITA/analyse_vibratoire_app/raw/main/Bearing%20data%20Base.xlsx"
     try:
         response = requests.get(url)
-        response.raise_for_status()
+        response.raise_for_status()  # Lève une exception pour les codes 4xx/5xx
+        
+        # Chargement et nettoyage des données
         bearing_data = pd.read_excel(BytesIO(response.content))
+        
         # Nettoyage agressif
-        bearing_data = bearing_data.dropna(subset=['Manufacturer'])  # Supprime les NaN
-        bearing_data['Manufacturer'] = bearing_data['Manufacturer'].astype(str).str.strip()  # Nettoie les strings
-        #bearing_data['BPFI'] = pd.to_numeric(bearing_data['FTF','BSF','BPFO', 'BPFI'], errors='coerce')
-        for col in ['FTF', 'BSF', 'BPFO', 'BPFI']:
-               bearing_data[col] = pd.to_numeric(bearing_data[col], errors='coerce')
-        bearing_data = bearing_data.dropna(subset=['FTF','BSF','BPFO', 'BPFI'])
+        bearing_data = bearing_data.dropna(subset=['Manufacturer'])
+        bearing_data['Manufacturer'] = bearing_data['Manufacturer'].astype(str).str.strip()
+        
+        # Conversion des colonnes numériques
+        numeric_cols = ['FTF', 'BSF', 'BPFO', 'BPFI']
+        for col in numeric_cols:
+            if col in bearing_data.columns:
+                bearing_data[col] = pd.to_numeric(bearing_data[col], errors='coerce')
+        
+        # Suppression des lignes avec valeurs manquantes
+        bearing_data = bearing_data.dropna(subset=numeric_cols)
+        
         return bearing_data
-    except:
+    
+    except Exception as e:
+        st.error(f"Erreur de chargement des données: {str(e)}")
+        st.info("Utilisation des données par défaut")
+        
         # Données par défaut si le chargement échoue
         default_data = {
             'Manufacturer': ['AMI', 'AMI', 'DODGE', 'DODGE', 'FAFNIR', 'FAFNIR', 'KOYO', 'KOYO', 
@@ -97,6 +110,7 @@ def load_bearing_data():
         }
         return pd.DataFrame(default_data)
 
+# Charger les données des roulements
 bearing_data = load_bearing_data()
 # Fonctions de traitement du signal améliorées
 def advanced_signal_stats(signal):
