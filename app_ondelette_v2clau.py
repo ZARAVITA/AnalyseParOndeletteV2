@@ -345,7 +345,7 @@ def main():
                     )
                     
                     st.plotly_chart(fig_fft, use_container_width=True)
-            
+            #########################################################################-----------------------------------------------------------
             with tab3:
                 st.subheader("⚙️ Traitement BLSD")
                 
@@ -596,52 +596,196 @@ def main():
                 except Exception as e:
                     st.error(f"❌ Erreur lors du traitement: {str(e)}")
                     return
-            
-            with tab4:
-                st.subheader("🌊 Analyse par Ondelettes")
+            #########################################################################-----------------------------------------------------------
+# ... (le reste du code précédent reste inchangé) ...
+
+            with tab3:
+                st.subheader("⚙️ Traitement BLSD")
                 
-                if st.button("🚀 Lancer l'Analyse CWT", type="primary"):
-                    with st.spinner("Calcul en cours..."):
-                        try:
-                            # Calcul de la CWT
-                            scales = np.arange(
-                                wavelet_params['scale_min'], 
-                                wavelet_params['scale_max'], 
-                                wavelet_params['scale_step']
+                # Application des filtres avec gestion d'erreurs
+                try:
+                    # ... (code de traitement du signal inchangé) ...
+                    
+                    # Comparaison des statistiques
+                    st.subheader("📊 Comparaison Avant/Après Traitement")
+                    
+                    # ... (code de comparaison inchangé) ...
+                    
+                    ########################################################################
+                    # SECTION CORRIGÉE: OPTIONS D'AFFICHAGE DU SPECTRE
+                    ########################################################################
+                    st.subheader("🎯 Options d'Affichage du Spectre")
+                    
+                    # Entrée personnalisée pour la vitesse de rotation
+                    custom_rpm = st.number_input(
+                        "Vitesse de rotation personnalisée (RPM)",
+                        min_value=1,
+                        max_value=10000,
+                        value=1000,
+                        step=10
+                    )
+                    custom_hz = custom_rpm / 60
+                    st.info(f"**Fréquence de rotation calculée:** {custom_hz:.2f} Hz")
+                    
+                    # Calcul des fréquences caractéristiques personnalisées
+                    frequencies = {
+                        'FTF': bearing_info['FTF'] * custom_hz,
+                        'BSF': bearing_info['BSF'] * custom_hz,
+                        'BPFO': bearing_info['BPFO'] * custom_hz,
+                        'BPFI': bearing_info['BPFI'] * custom_hz
+                    }
+                    
+                    # SECTION CORRIGÉE: Options d'affichage des fréquences caractéristiques AVANT les harmoniques
+                    st.subheader("🔍 Fréquences Caractéristiques")
+                    st.write("Sélectionnez les fréquences à afficher:")
+                    
+                    # Création de 4 colonnes pour les cases à cocher
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        show_ftf = st.checkbox("FTF", True, key='ftf_check')
+                    with col2:
+                        show_bsf = st.checkbox("BSF", True, key='bsf_check')
+                    with col3:
+                        show_bpfo = st.checkbox("BPFO", True, key='bpfo_check')
+                    with col4:
+                        show_bpfi = st.checkbox("BPFI", True, key='bpfi_check')
+                    
+                    # Options pour les harmoniques - APRÈS la sélection des fréquences
+                    st.subheader("📐 Options des Harmoniques")
+                    
+                    show_harmonics = st.checkbox("Afficher les harmoniques des fréquences caractéristiques", False)
+                    if show_harmonics:
+                        harmonics_count = st.slider("Nombre d'harmoniques à afficher", 1, 10, 3, key='harmonics_slider')
+                    
+                    show_speed_harmonics = st.checkbox("Afficher les harmoniques de vitesse", False)
+                    if show_speed_harmonics:
+                        speed_harmonics_count = st.slider("Nombre d'harmoniques de vitesse", 1, 10, 3, key='speed_harmonics_slider')
+                        speed_harmonics_color = st.color_picker("Couleur des harmoniques de vitesse", "#FFA500", key='speed_color_picker')
+                    
+                    ########################################################################
+                    # SPECTRE DU SIGNAL TRAITÉ AVEC LES OPTIONS PERSONNALISÉES
+                    ########################################################################
+                    st.subheader("📈 Spectre du Signal Traité")
+                    
+                    # Calcul de la FFT avec fenêtre de Hanning
+                    fft_freq, fft_amp = calculate_fft(signal_processed, fs, apply_window=True)
+                    
+                    # Création du graphique
+                    fig_fft_proc = go.Figure()
+                    fig_fft_proc.add_trace(go.Scatter(
+                        x=fft_freq, 
+                        y=fft_amp,
+                        mode='lines',
+                        name='Spectre FFT'
+                    ))
+                    
+                    # Couleurs pour les fréquences caractéristiques
+                    freq_colors = {
+                        'FTF': 'violet',
+                        'BSF': 'green',
+                        'BPFO': 'blue',
+                        'BPFI': 'red'
+                    }
+                    
+                    # Ajout des fréquences caractéristiques sélectionnées
+                    if show_ftf:
+                        fig_fft_proc.add_vline(
+                            x=frequencies['FTF'],
+                            line_dash="dash",
+                            line_color=freq_colors['FTF'],
+                            annotation_text="FTF",
+                            annotation_position="top right"
+                        )
+                        if show_harmonics:
+                            for h in range(2, harmonics_count + 1):
+                                fig_fft_proc.add_vline(
+                                    x=frequencies['FTF'] * h,
+                                    line_dash="dot",
+                                    line_color=freq_colors['FTF'],
+                                    annotation_text=f"{h}×FTF",
+                                    annotation_position="top right"
+                                )
+                    
+                    if show_bsf:
+                        fig_fft_proc.add_vline(
+                            x=frequencies['BSF'],
+                            line_dash="dash",
+                            line_color=freq_colors['BSF'],
+                            annotation_text="BSF",
+                            annotation_position="top right"
+                        )
+                        if show_harmonics:
+                            for h in range(2, harmonics_count + 1):
+                                fig_fft_proc.add_vline(
+                                    x=frequencies['BSF'] * h,
+                                    line_dash="dot",
+                                    line_color=freq_colors['BSF'],
+                                    annotation_text=f"{h}×BSF",
+                                    annotation_position="top right"
+                                )
+                    
+                    if show_bpfo:
+                        fig_fft_proc.add_vline(
+                            x=frequencies['BPFO'],
+                            line_dash="dash",
+                            line_color=freq_colors['BPFO'],
+                            annotation_text="BPFO",
+                            annotation_position="top right"
+                        )
+                        if show_harmonics:
+                            for h in range(2, harmonics_count + 1):
+                                fig_fft_proc.add_vline(
+                                    x=frequencies['BPFO'] * h,
+                                    line_dash="dot",
+                                    line_color=freq_colors['BPFO'],
+                                    annotation_text=f"{h}×BPFO",
+                                    annotation_position="top right"
+                                )
+                    
+                    if show_bpfi:
+                        fig_fft_proc.add_vline(
+                            x=frequencies['BPFI'],
+                            line_dash="dash",
+                            line_color=freq_colors['BPFI'],
+                            annotation_text="BPFI",
+                            annotation_position="top right"
+                        )
+                        if show_harmonics:
+                            for h in range(2, harmonics_count + 1):
+                                fig_fft_proc.add_vline(
+                                    x=frequencies['BPFI'] * h,
+                                    line_dash="dot",
+                                    line_color=freq_colors['BPFI'],
+                                    annotation_text=f"{h}×BPFI",
+                                    annotation_position="top right"
+                                )
+                    
+                    # Ajout des harmoniques de vitesse si activé
+                    if show_speed_harmonics:
+                        for h in range(1, speed_harmonics_count + 1):
+                            harmonic_freq = h * custom_hz
+                            fig_fft_proc.add_vline(
+                                x=harmonic_freq,
+                                line_dash="dash",
+                                line_color=speed_harmonics_color,
+                                annotation_text=f"{h}×Vitesse",
+                                annotation_position="bottom right"
                             )
-                            
-                            coeffs, freqs_cwt = pywt.cwt(
-                                signal_processed, 
-                                scales, 
-                                wavelet_params['type'], 
-                                sampling_period=1/fs
-                            )
-                            
-                            # Création du scalogramme amélioré
-                            fig_cwt = go.Figure()
-                            
-                            # Scalogramme principal
-                            fig_cwt.add_trace(go.Heatmap(
-                                z=20*np.log10(np.abs(coeffs) + 1e-12),  # En dB
-                                x=time,
-                                y=freqs_cwt,
-                                colorscale='Jet',
-                                colorbar=dict(title="Amplitude (dB)"),
-                                hoverongaps=False
-                            ))
-                            
-                            fig_cwt.update_layout(
-                                title="Scalogramme - Transformée en Ondelettes Continue",
-                                xaxis_title="Temps (s)",
-                                yaxis_title="Fréquence (Hz)",
-                                height=600,
-                                yaxis_type='log' if st.checkbox("Échelle log") else 'linear'
-                            )
-                            
-                            st.plotly_chart(fig_cwt, use_container_width=True)
-                            
-                        except Exception as e:
-                            st.error(f"❌ Erreur lors de l'analyse CWT: {str(e)}")
+                    
+                    fig_fft_proc.update_layout(
+                        title="Spectre FFT du Signal Traité (Fenêtre de Hanning)",
+                        xaxis_title="Fréquence (Hz)",
+                        yaxis_title="Amplitude",
+                        height=500
+                    )
+                    
+                    st.plotly_chart(fig_fft_proc, use_container_width=True)
+                    
+                except Exception as e:
+                    st.error(f"❌ Erreur lors du traitement: {str(e)}")
+                    return
+
+# ... (le reste du code reste inchangé) ...
             
             with tab5:
                 st.subheader("📈 Diagnostic Automatisé")
