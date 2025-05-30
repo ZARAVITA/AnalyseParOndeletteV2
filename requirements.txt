@@ -1,0 +1,8 @@
+streamlit
+numpy
+pandas
+plotly
+scipy
+pywavelets
+setuptools
+requests
