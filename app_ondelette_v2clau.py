@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from scipy.signal import butter, filtfilt, spectrogram, welch
+from scipy.signal import butter, filtfilt, welch, find_peaks
 from scipy.stats import kurtosis, skew
 import pywt
 import requests
@@ -84,7 +84,7 @@ def load_bearing_data():
     }
     
     try:
-        # Tentative de chargement depuis GitHub (URL corrigée)
+        # Tentative de chargement depuis GitHub
         url = "https://raw.githubusercontent.com/ZARAVITA/Analyse_vibratoire_par_ondelettes/main/Bearing%20data%20Base.csv"
         response = requests.get(url, timeout=10)
         response.raise_for_status()
@@ -126,8 +126,6 @@ def advanced_signal_stats(signal):
 
 def detect_peaks_auto(signal, time, prominence=None):
     """Détection automatique de pics avec prominence adaptative"""
-    from scipy.signal import find_peaks
-    
     if prominence is None:
         prominence = np.std(signal) * 2
     
@@ -229,10 +227,8 @@ def create_sidebar():
     st.sidebar.subheader("📊 Fréquences Caractéristiques")
     colors = {'FTF': '🟣', 'BSF': '🟢', 'BPFO': '🔵', 'BPFI': '🔴'}
     
-    freq_display = {}
     for freq_type, freq_val in frequencies.items():
         st.sidebar.markdown(f"{colors[freq_type]} **{freq_type}:** {freq_val:.2f} Hz")
-        freq_display[freq_type] = freq_val
     
     # Options d'affichage améliorées
     st.sidebar.subheader("🎨 Options d'Affichage")
@@ -272,7 +268,7 @@ def create_sidebar():
         'scale_step': st.sidebar.number_input("Pas", 1, 10, 2)
     }
     
-    return selected_bearing, freq_display, display_options, filter_params, wavelet_params
+    return selected_bearing, frequencies, display_options, filter_params, wavelet_params
 
 # Interface principale
 def main():
@@ -544,7 +540,7 @@ def main():
                     'Énergie Total': stats['Energy']
                 }
                 
-                # Seuils d'alerte (à adapter selon l'application)
+                # Seuils d'alerte
                 thresholds = {
                     'RMS Global': {'warning': 2.0, 'critical': 5.0},
                     'Facteur de Crête': {'warning': 4.0, 'critical': 8.0},
@@ -584,3 +580,26 @@ def main():
                     🚨 **INTERVENTION URGENTE REQUISE**
                     - Arrêter la machine dès que possible
                     - Inspecter visuellement le roulement
+                    - Planifier le remplacement immédiat
+                    """)
+                elif overall_status == "🟡 ATTENTION":
+                    st.warning("""
+                    ⚠️ **Surveillance requise**
+                    - Augmenter la fréquence de surveillance
+                    - Vérifier les conditions de lubrification
+                    - Planifier une intervention prochaine
+                    """)
+                else:
+                    st.success("""
+                    ✅ **État normal**
+                    - Continuer la surveillance selon le planning
+                    - Vérifier les paramètres de fonctionnement
+                    """)
+                
+        except Exception as e:
+            st.error(f"❌ Erreur lors du traitement du fichier: {str(e)}")
+    else:
+        st.info("ℹ️ Veuillez télécharger un fichier CSV pour commencer l'analyse")
+
+if __name__ == "__main__":
+    main()
