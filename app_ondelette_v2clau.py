@@ -67,9 +67,7 @@ def load_bearing_data():
     
     # URLs alternatives à tester
     urls = [
-        "https://raw.githubusercontent.com/ZARAVITA/AnalyseParOndeletteV2/main/Bearing%20data%20Base.csv",
-        "https://raw.githubusercontent.com/ZARAVITA/AnalyseParOndeletteV2/refs/heads/main/Bearing%20data%20Base.csv",
-        "https://github.com/ZARAVITA/AnalyseParOndeletteV2/raw/main/Bearing%20data%20Base.csv"
+        "https://raw.githubusercontent.com/ZARAVITA/AnalyseParOndeletteV2/main/Bearing%20data%20Base.csv"
     ]
     
     for i, url in enumerate(urls):
