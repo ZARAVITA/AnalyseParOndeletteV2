@@ -714,7 +714,7 @@ def main():
                     st.plotly_chart(fig_fft_proc, use_container_width=True)
                     
                 except Exception as e:
-                    st.error(f"❌ Erreur lors du traitement: {str(e)}")
+                    st.error(f"❌ Oh Oh Erreur lors du traitement: {str(e)}")
                     return
 
 
