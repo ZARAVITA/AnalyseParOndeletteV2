@@ -715,7 +715,81 @@ def main():
                 except Exception as e:
                     st.error(f"❌ Erreur lors du traitement: {str(e)}")
                     return
-            
+
+
+                        with tab4:
+                st.subheader("🌊 Analyse par Ondelettes")
+                
+                if st.button("🚀 Lancer l'Analyse CWT", type="primary"):
+                    with st.spinner("Calcul en cours..."):
+                        try:
+                            # Calcul de la CWT
+                            scales = np.arange(
+                                wavelet_params['scale_min'], 
+                                wavelet_params['scale_max'], 
+                                wavelet_params['scale_step']
+                            )
+                            
+                            coeffs, freqs_cwt = pywt.cwt(
+                                signal_processed, 
+                                scales, 
+                                wavelet_params['type'], 
+                                sampling_period=1/fs
+                            )
+                            
+                            # Création du scalogramme amélioré
+                            fig_cwt = go.Figure()
+                            
+                            # Scalogramme principal
+                            fig_cwt.add_trace(go.Heatmap(
+                                z=20*np.log10(np.abs(coeffs) + 1e-12),  # En dB
+                                x=time,
+                                y=freqs_cwt,
+                                colorscale='Jet',
+                                colorbar=dict(title="Amplitude (dB)"),
+                                hoverongaps=False
+                            ))
+                            
+                            # Ajout des fréquences caractéristiques
+                            freq_colors = {
+                                'FTF': 'violet', 'BSF': 'green', 
+                                'BPFO': 'blue', 'BPFI': 'red'
+                            }
+                            
+                            for freq_type, show in display_opts.items():
+                                if freq_type in frequencies and show:
+                                    freq_val = frequencies[freq_type]
+                                    
+                                    # Ligne principale
+                                    fig_cwt.add_hline(
+                                        y=freq_val,
+                                        line=dict(color=freq_colors[freq_type], width=2, dash='dot'),
+                                        annotation_text=freq_type,
+                                        annotation_position="right"
+                                    )
+                                    
+                                    # Harmoniques
+                                    if display_opts.get('harmonics', False):
+                                        for h in range(2, display_opts.get('harmonics_count', 3) + 1):
+                                            fig_cwt.add_hline(
+                                                y=freq_val * h,
+                                                line=dict(color=freq_colors[freq_type], width=1, dash='dot'),
+                                                annotation_text=f"{h}×{freq_type}",
+                                                annotation_position="right"
+                                            )
+                            
+                            fig_cwt.update_layout(
+                                title="Scalogramme - Transformée en Ondelettes Continue",
+                                xaxis_title="Temps (s)",
+                                yaxis_title="Fréquence (Hz)",
+                                height=600,
+                                yaxis_type='log' if st.checkbox("Échelle log") else 'linear'
+                            )
+                            
+                            st.plotly_chart(fig_cwt, use_container_width=True)
+                            
+                        except Exception as e:
+                            st.error(f"❌ Erreur lors de l'analyse CWT: {str(e)}")
             with tab5:
                 st.subheader("📈 Diagnostic Automatisé")
                 
