@@ -220,7 +220,7 @@ def advanced_signal_stats(signal):
         'Crest Factor': np.max(np.abs(signal)) / np.sqrt(np.mean(signal**2)),
         'Kurtosis': kurtosis(signal),
         'Skewness': skew(signal),
-        'Energy': np.sum(signal**2)
+        'Energy': float(np.sum(signal**2))
     }
 
 def detect_peaks_auto(signal, time, prominence=None):
