@@ -546,7 +546,7 @@ def main():
                         value=1000.0,
                         step=1.0
                         )
-                     . # Conversion RPM vers Hz
+                     # Conversion RPM vers Hz
                         custom_hz = rotation_input / 60.0
                         st.info(f"**Fréquence de rotation:** {rotation_input:.1f} RPM = {custom_hz:.2f} Hz")
                     else:
