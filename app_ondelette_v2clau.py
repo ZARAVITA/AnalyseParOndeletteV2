@@ -790,7 +790,7 @@ def main():
                             st.plotly_chart(fig_cwt, use_container_width=True)
                             
                         except Exception as e:
-                            st.error(f"❌ Erreur lors de l'analyse CWT: {str(e)}")
+                            st.error(f"❌ TAB4 Erreur lors de l'analyse CWT: {str(e)}")
             with tab5:
                 st.subheader("📈 Diagnostic Automatisé")
                 
@@ -859,7 +859,7 @@ def main():
                     """)
                 
         except Exception as e:
-            st.error(f"❌ OH! Erreur lors du traitement du fichierr: {str(e)}")
+            st.error(f"❌ OH!TAB5 Erreur lors du traitement du fichierr: {str(e)}")
     else:
         st.info("ℹ️ Veuillez télécharger un fichier CSV pour commencer l'analyse")
 
