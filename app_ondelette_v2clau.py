@@ -532,9 +532,10 @@ def main():
                     custom_rpm = st.number_input(
                         "Fréquence de rotation personnalisée (RPM,Hz)",
                         min_value=1.0,
-                        max_value=500.0,
+                        max_value=1000.0,
                         value=16.67,
                         step=0.01
+                        format="%.2f"
                     )
                     custom_hz = custom_rpm/1.0
                     #st.info(f"**Fréquence de rotation calculée:** {custom_hz:.2f} Hz")
@@ -551,24 +552,24 @@ def main():
                     st.write("**Sélectionnez les fréquences caractéristiques à afficher:**")
                     col1, col2, col3, col4 = st.columns(4)
                     with col1:
-                        show_ftf = st.checkbox("FTF", True, key='ftf_spectrum')
+                        show_ftf = st.checkbox("FTF", False, key='ftf_spectrum')
                     with col2:
-                        show_bsf = st.checkbox("BSF", True, key='bsf_spectrum')
+                        show_bsf = st.checkbox("BSF", False, key='bsf_spectrum')
                     with col3:
-                        show_bpfo = st.checkbox("BPFO", True, key='bpfo_spectrum')
+                        show_bpfo = st.checkbox("BPFO", False, key='bpfo_spectrum')
                     with col4:
-                        show_bpfi = st.checkbox("BPFI", True, key='bpfi_spectrum')
+                        show_bpfi = st.checkbox("BPFI", False, key='bpfi_spectrum')
                     
                     # Options pour les harmoniques - APRÈS LA SÉLECTION DES FRÉQUENCES
                     st.subheader("📐 Options des Harmoniques")
                     
                     show_harmonics = st.checkbox("Afficher les harmoniques des fréquences caractéristiques", False)
                     if show_harmonics:
-                        harmonics_count = st.slider("Nombre d'harmoniques à afficher", 1, 10, 3)
+                        harmonics_count = st.slider("Nombre d'harmoniques à afficher", 1, 5, 3)
                     
                     show_speed_harmonics = st.checkbox("Afficher les harmoniques de vitesse", False)
                     if show_speed_harmonics:
-                        speed_harmonics_count = st.slider("Nombre d'harmoniques de vitesse", 1, 10, 3)
+                        speed_harmonics_count = st.slider("Nombre d'harmoniques de vitesse", 1, 5, 3)
                         speed_harmonics_color = st.color_picker("Couleur des harmoniques de vitesse", "#FFA500")
                     
                     ########################################################################
@@ -677,7 +678,7 @@ def main():
                                 x=harmonic_freq,
                                 line_dash="dash",
                                 line_color=speed_harmonics_color,
-                                annotation_text=f"{h}×Vitesse",
+                                annotation_text=f"{h}×Vit. Rot.",
                                 annotation_position="bottom right"
                             )
                     
