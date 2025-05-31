@@ -540,21 +540,21 @@ def main():
                     if unit_choice == "RPM":
                         rotation_input = st.number_input(
                         "Fréquence de rotation (RPM)",
-                        min_value=1,
-                        max_value=30000,
-                        value=1000,
-                        step=1
+                        min_value=1.0,
+                        max_value=30000.0,
+                        value=1000.0,
+                        step=1.0
                         )
-                     # Conversion RPM vers Hz
+                     . # Conversion RPM vers Hz
                         custom_hz = rotation_input / 60.0
                         st.info(f"**Fréquence de rotation:** {rotation_input:.1f} RPM = {custom_hz:.2f} Hz")
                     else:
                       custom_hz = st.number_input(
                          "Fréquence de rotation (Hz)",
-                         min_value=0,  # ~1 RPM
-                         max_value=500,
-                         value=16,
-                         step=0
+                         min_value=0.017,  # ~1 RPM
+                         max_value=1000.0,
+                         value=16.67,
+                         step=0.01
                       )
                       rotation_rpm = custom_hz * 60.0
                       st.info(f"**Fréquence de rotation:** {custom_hz:.2f} Hz = {rotation_rpm:.1f} RPM")
@@ -717,7 +717,7 @@ def main():
                     return
 
 
-                        with tab4:
+            with tab4:
                 st.subheader("🌊 Analyse par Ondelettes")
                 
                 if st.button("🚀 Lancer l'Analyse CWT", type="primary"):
@@ -858,7 +858,7 @@ def main():
                     """)
                 
         except Exception as e:
-            st.error(f"❌ Erreur lors du traitement du fichier: {str(e)}")
+            st.error(f"❌ OH! Erreur lors du traitement du fichierr: {str(e)}")
     else:
         st.info("ℹ️ Veuillez télécharger un fichier CSV pour commencer l'analyse")
 
