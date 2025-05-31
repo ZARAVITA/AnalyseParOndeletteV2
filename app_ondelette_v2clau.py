@@ -321,9 +321,10 @@ def create_sidebar():
     
     # Paramètres des filtres avec validation
     st.sidebar.subheader("🔧 Paramètres de Filtrage")
+    #----------------------------------------------------------------------------En entier TOUS
     filter_params = {
-        'highpass_freq': st.sidebar.slider("Passe-haut (Hz)", 10, 2000, 500),
-        'lowpass_freq': st.sidebar.slider("Passe-bas (Hz)", 10, 1000, 200),
+        'highpass_freq': st.sidebar.slider("Passe-haut (Hz)", 10.0, 2000.0, 500.0),
+        'lowpass_freq': st.sidebar.slider("Passe-bas (Hz)", 10.0, 1000.0, 200.0),
         'filter_order': st.sidebar.selectbox("Ordre du filtre", [2, 4, 6, 8], index=1)
     }
     
