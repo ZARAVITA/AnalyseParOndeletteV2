@@ -54,7 +54,7 @@ Cette application effectue une analyse vibratoire complète en utilisant la tran
 - 🔍 **Détection automatique de pics**
 - 📈 **Analyse spectrale comparative**
 - 🎯 **Diagnostic automatisé**
-- 📱 **Interface responsive améliorée**
+- ⚙️ **Traitement BLSD**
 - 🪟 **Fenêtrage de Hanning** pour les analyses spectrales
 
 *Développé par **M. A Angelico** et **ZARAVITA** - Version Améliorée*
