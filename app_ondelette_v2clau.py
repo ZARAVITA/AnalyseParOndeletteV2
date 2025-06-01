@@ -816,7 +816,7 @@ def main():
                                 
                             except Exception as e:
                                 st.error(f"❌TAB4 Erreur lors de l'analyse CWT: {str(e)}")
-# ... (le reste du code) ...
+            # ... (le reste du code) ...
             with tab5:
                 st.subheader("📈 Diagnostic Automatisé")
                 
