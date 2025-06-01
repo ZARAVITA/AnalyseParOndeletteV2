@@ -732,7 +732,17 @@ def main():
 
             with tab4:
                 st.subheader("🌊 Analyse par Ondelettes")
-                
+                # Vérification des paramètres------------------------------------------------------------------
+                st.write(f"Signal length: {len(signal_processed)}, FS: {fs}, Scales: {scales}")
+
+                if len(signal_processed) == 0:
+                    st.error("Le signal est vide!")
+                    return
+
+                if any(param is None for param in [fs, scales]):
+                     st.error("Paramètres manquants (fs ou scales)")
+                     return
+                #---------------------------------------------
                 if st.button("🚀 Lancer l'Analyse CWT", type="primary"):
                     with st.spinner("Calcul en cours..."):
                         try:
