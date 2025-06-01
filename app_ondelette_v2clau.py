@@ -756,6 +756,27 @@ def main():
                                 'FTF': 'violet', 'BSF': 'green', 
                                 'BPFO': 'blue', 'BPFI': 'red'
                             }
+                            #---------------------------------------------------------------------
+                            freq_options = {
+                                'FTF': show_ftf,
+                                'BSF': show_bsf,
+                                'BPFO': show_bpfo,
+                                'BPFI': show_bpfi
+                            }
+                            
+                            for freq_type, show in freq_options.items():
+                                if show and freq_type in frequencies:
+                                    freq_val = frequencies[freq_type]
+                                    
+                                    # Ligne principale
+                                    fig_cwt.add_hline(
+                                        y=freq_val,
+                                        line=dict(color=freq_colors[freq_type], width=2, dash='dot'),
+                                        annotation_text=freq_type,
+                                        annotation_position="right"
+                                    )
+
+                            #---------------------------------------------------------------------
                             
                             for freq_type, show in display_opts.items():
                                 if freq_type in frequencies and show:
