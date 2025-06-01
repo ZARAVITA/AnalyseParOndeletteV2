@@ -849,7 +849,9 @@ def main():
                             st.plotly_chart(fig_cwt, use_container_width=True)
                             
                         except Exception as e:
+                            import traceback
                             st.error(f"❌ TAB4 Erreur lors de l'analyse CWT: {str(e)}")
+                            st.error(traceback.format_exc())  # Affiche la trace complète  #----------------------------------------------
             with tab5:
                 st.subheader("📈 Diagnostic Automatisé")
                 
