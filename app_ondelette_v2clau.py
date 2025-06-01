@@ -730,6 +730,16 @@ def main():
                                 wavelet_params['scale_max'], 
                                 wavelet_params['scale_step']
                             )
+                            display_opts = {
+                              'FTF': show_ftf,
+                              'BSF': show_bsf,
+                              'BPFO': show_bpfo,
+                              'BPFI': show_bpfi,
+                              'harmonics': show_harmonics,
+                              'harmonics_count': harmonics_count,
+                              'show_speed_harmonics': show_speed_harmonics,
+                              'speed_harmonics_count': speed_harmonics_count,
+                              'speed_harmonics_color': speed_harmonics_color
                             
                             coeffs, freqs_cwt = pywt.cwt(
                                 signal_processed, 
