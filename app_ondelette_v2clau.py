@@ -740,7 +740,7 @@ def main():
                               'show_speed_harmonics': show_speed_harmonics,
                               'speed_harmonics_count': speed_harmonics_count,
                               'speed_harmonics_color': speed_harmonics_color
-                            
+                            }
                             coeffs, freqs_cwt = pywt.cwt(
                                 signal_processed, 
                                 scales, 
