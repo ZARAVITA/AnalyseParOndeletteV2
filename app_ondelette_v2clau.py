@@ -54,7 +54,7 @@ Cette application effectue une analyse vibratoire complète en utilisant la tran
 - 🔍 **Détection automatique de pics**
 - 📈 **Analyse spectrale comparative**
 - 🎯 **Diagnostic automatisé**
-- ⚙️ **Traitement BLSD**
+- 📱 **Interface responsive améliorée**
 - 🪟 **Fenêtrage de Hanning** pour les analyses spectrales
 
 *Développé par **M. A Angelico** et **ZARAVITA** - Version Améliorée*
@@ -347,18 +347,6 @@ def create_sidebar():
 def main():
     # Création de la sidebar
     bearing_info, filter_params, wavelet_params = create_sidebar()
-    # Initialisation des paramètres d'affichage--------------------------------------------------------------------------Nouv
-    if 'harmonics_count' not in st.session_state:
-        st.session_state.harmonics_count = 3
-    if 'show_harmonics' not in st.session_state:
-        st.session_state.show_harmonics = False
-    if 'show_speed_harmonics' not in st.session_state:
-        st.session_state.show_speed_harmonics = False
-    if 'speed_harmonics_count' not in st.session_state:
-        st.session_state.speed_harmonics_count = 3
-    if 'speed_harmonics_color' not in st.session_state:
-        st.session_state.speed_harmonics_color = "#FFA500"
-    #----------------------------------------------------------------------------------------------------------------------FinNouv
     
     # Zone principale
     uploaded_file = st.file_uploader(
@@ -423,7 +411,7 @@ def main():
                 
                 with col3:
                     st.metric("Skewness", f"{stats['Skewness']:.2f}")
-                    st.metric("Energie", f"{stats['Energy']:.1e}")
+                    st.metric("Energy", f"{stats['Energy']:.1e}")
             
             with tab2:
                 st.subheader("🔍 Signal Original")
@@ -732,17 +720,7 @@ def main():
 
             with tab4:
                 st.subheader("🌊 Analyse par Ondelettes")
-                # Vérification des paramètres------------------------------------------------------------------
-                st.write(f"Signal length: {len(signal_processed)}, FS: {fs}, Scales: {scales}")
-
-                if len(signal_processed) == 0:
-                    st.error("Le signal est vide!")
-                    return
-
-                if any(param is None for param in [fs, scales]):
-                     st.error("Paramètres manquants (fs ou scales)")
-                     return
-                #---------------------------------------------
+                
                 if st.button("🚀 Lancer l'Analyse CWT", type="primary"):
                     with st.spinner("Calcul en cours..."):
                         try:
@@ -752,33 +730,7 @@ def main():
                                 wavelet_params['scale_max'], 
                                 wavelet_params['scale_step']
                             )
-                            #------------------------------------------------------------------------------------------------------------NouvDisplay
-                            # Récupération des paramètres depuis session_state
-                            display_opts = {
-                                'FTF': st.session_state.get('show_ftf', False),
-                                'BSF': st.session_state.get('show_bsf', False),
-                                'BPFO': st.session_state.get('show_bpfo', False),
-                                'BPFI': st.session_state.get('show_bpfi', False),
-                                'harmonics': st.session_state.get('show_harmonics', False),
-                                'harmonics_count': st.session_state.get('harmonics_count', 3),
-                                'show_speed_harmonics': st.session_state.get('show_speed_harmonics', False),
-                                'speed_harmonics_count': st.session_state.get('speed_harmonics_count', 3),
-                                'speed_harmonics_color': st.session_state.get('speed_harmonics_color', "#FFA500")
-                            }
-                            #-----------------------------------------------------------------------------------------------------------FinNouvDisplay
                             
-                            '''
-                            display_opts = {
-                              'FTF': show_ftf,
-                              'BSF': show_bsf,
-                              'BPFO': show_bpfo,
-                              'BPFI': show_bpfi,
-                              'harmonics': show_harmonics,
-                              'harmonics_count': harmonics_count,
-                              'show_speed_harmonics': show_speed_harmonics,
-                              'speed_harmonics_count': speed_harmonics_count,
-                              'speed_harmonics_color': speed_harmonics_color
-                            } '''
                             coeffs, freqs_cwt = pywt.cwt(
                                 signal_processed, 
                                 scales, 
@@ -804,27 +756,6 @@ def main():
                                 'FTF': 'violet', 'BSF': 'green', 
                                 'BPFO': 'blue', 'BPFI': 'red'
                             }
-                            #---------------------------------------------------------------------
-                            freq_options = {
-                                'FTF': show_ftf,
-                                'BSF': show_bsf,
-                                'BPFO': show_bpfo,
-                                'BPFI': show_bpfi
-                            }
-                            
-                            for freq_type, show in freq_options.items():
-                                if show and freq_type in frequencies:
-                                    freq_val = frequencies[freq_type]
-                                    
-                                    # Ligne principale
-                                    fig_cwt.add_hline(
-                                        y=freq_val,
-                                        line=dict(color=freq_colors[freq_type], width=2, dash='dot'),
-                                        annotation_text=freq_type,
-                                        annotation_position="right"
-                                    )
-
-                            #---------------------------------------------------------------------
                             
                             for freq_type, show in display_opts.items():
                                 if freq_type in frequencies and show:
@@ -859,9 +790,7 @@ def main():
                             st.plotly_chart(fig_cwt, use_container_width=True)
                             
                         except Exception as e:
-                            import traceback
                             st.error(f"❌ TAB4 Erreur lors de l'analyse CWT: {str(e)}")
-                            st.error(traceback.format_exc())  # Affiche la trace complète  #----------------------------------------------
             with tab5:
                 st.subheader("📈 Diagnostic Automatisé")
                 
