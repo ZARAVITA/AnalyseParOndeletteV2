@@ -347,6 +347,18 @@ def create_sidebar():
 def main():
     # Création de la sidebar
     bearing_info, filter_params, wavelet_params = create_sidebar()
+    # Initialisation des paramètres d'affichage--------------------------------------------------------------------------Nouv
+    if 'harmonics_count' not in st.session_state:
+        st.session_state.harmonics_count = 3
+    if 'show_harmonics' not in st.session_state:
+        st.session_state.show_harmonics = False
+    if 'show_speed_harmonics' not in st.session_state:
+        st.session_state.show_speed_harmonics = False
+    if 'speed_harmonics_count' not in st.session_state:
+        st.session_state.speed_harmonics_count = 3
+    if 'speed_harmonics_color' not in st.session_state:
+        st.session_state.speed_harmonics_color = "#FFA500"
+    #----------------------------------------------------------------------------------------------------------------------FinNouv
     
     # Zone principale
     uploaded_file = st.file_uploader(
