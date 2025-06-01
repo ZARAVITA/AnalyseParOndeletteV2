@@ -730,138 +730,93 @@ def main():
                     return
 
 
+            # ... (le reste du code reste inchangé jusqu'à la section des onglets) ...
+
             with tab4:
-                st.subheader("🌊 Analyse par Ondelettes")
-                # Vérification des paramètres------------------------------------------------------------------
-                st.write(f"Signal length: {len(signal_processed)}, FS: {fs}, Scales: {scales}")
-
-                if len(signal_processed) == 0:
-                    st.error("Le signal est vide!")
-                    return
-
-                if any(param is None for param in [fs, scales]):
-                     st.error("Paramètres manquants (fs ou scales)")
-                     return
-                #---------------------------------------------
-                if st.button("🚀 Lancer l'Analyse CWT", type="primary"):
-                    with st.spinner("Calcul en cours..."):
-                        try:
-                            # Calcul de la CWT
-                            scales = np.arange(
-                                wavelet_params['scale_min'], 
-                                wavelet_params['scale_max'], 
-                                wavelet_params['scale_step']
-                            )
-                            #------------------------------------------------------------------------------------------------------------NouvDisplay
-                            # Récupération des paramètres depuis session_state
-                            display_opts = {
-                                'FTF': st.session_state.get('show_ftf', False),
-                                'BSF': st.session_state.get('show_bsf', False),
-                                'BPFO': st.session_state.get('show_bpfo', False),
-                                'BPFI': st.session_state.get('show_bpfi', False),
-                                'harmonics': st.session_state.get('show_harmonics', False),
-                                'harmonics_count': st.session_state.get('harmonics_count', 3),
-                                'show_speed_harmonics': st.session_state.get('show_speed_harmonics', False),
-                                'speed_harmonics_count': st.session_state.get('speed_harmonics_count', 3),
-                                'speed_harmonics_color': st.session_state.get('speed_harmonics_color', "#FFA500")
-                            }
-                            #-----------------------------------------------------------------------------------------------------------FinNouvDisplay
-                            
-                            '''
-                            display_opts = {
-                              'FTF': show_ftf,
-                              'BSF': show_bsf,
-                              'BPFO': show_bpfo,
-                              'BPFI': show_bpfi,
-                              'harmonics': show_harmonics,
-                              'harmonics_count': harmonics_count,
-                              'show_speed_harmonics': show_speed_harmonics,
-                              'speed_harmonics_count': speed_harmonics_count,
-                              'speed_harmonics_color': speed_harmonics_color
-                            } '''
-                            coeffs, freqs_cwt = pywt.cwt(
-                                signal_processed, 
-                                scales, 
-                                wavelet_params['type'], 
-                                sampling_period=1/fs
-                            )
-                            
-                            # Création du scalogramme amélioré
-                            fig_cwt = go.Figure()
-                            
-                            # Scalogramme principal
-                            fig_cwt.add_trace(go.Heatmap(
-                                z=20*np.log10(np.abs(coeffs) + 1e-12),  # En dB
-                                x=time,
-                                y=freqs_cwt,
-                                colorscale='Jet',
-                                colorbar=dict(title="Amplitude (dB)"),
-                                hoverongaps=False
-                            ))
-                            
-                            # Ajout des fréquences caractéristiques
-                            freq_colors = {
-                                'FTF': 'violet', 'BSF': 'green', 
-                                'BPFO': 'blue', 'BPFI': 'red'
-                            }
-                            #---------------------------------------------------------------------
-                            freq_options = {
-                                'FTF': show_ftf,
-                                'BSF': show_bsf,
-                                'BPFO': show_bpfo,
-                                'BPFI': show_bpfi
-                            }
-                            
-                            for freq_type, show in freq_options.items():
-                                if show and freq_type in frequencies:
-                                    freq_val = frequencies[freq_type]
-                                    
-                                    # Ligne principale
-                                    fig_cwt.add_hline(
-                                        y=freq_val,
-                                        line=dict(color=freq_colors[freq_type], width=2, dash='dot'),
-                                        annotation_text=freq_type,
-                                        annotation_position="right"
-                                    )
-
-                            #---------------------------------------------------------------------
-                            
-                            for freq_type, show in display_opts.items():
-                                if freq_type in frequencies and show:
-                                    freq_val = frequencies[freq_type]
-                                    
-                                    # Ligne principale
-                                    fig_cwt.add_hline(
-                                        y=freq_val,
-                                        line=dict(color=freq_colors[freq_type], width=2, dash='dot'),
-                                        annotation_text=freq_type,
-                                        annotation_position="right"
-                                    )
-                                    
-                                    # Harmoniques
-                                    if display_opts.get('harmonics', False):
-                                        for h in range(2, display_opts.get('harmonics_count', 3) + 1):
-                                            fig_cwt.add_hline(
-                                                y=freq_val * h,
-                                                line=dict(color=freq_colors[freq_type], width=1, dash='dot'),
-                                                annotation_text=f"{h}×{freq_type}",
-                                                annotation_position="right"
-                                            )
-                            
-                            fig_cwt.update_layout(
-                                title="Scalogramme - Transformée en Ondelettes Continue",
-                                xaxis_title="Temps (s)",
-                                yaxis_title="Fréquence (Hz)",
-                                height=600,
-                                yaxis_type='log' if st.checkbox("Échelle log") else 'linear'
-                            )
-                            
-                            st.plotly_chart(fig_cwt, use_container_width=True)
-                            
-                        except Exception as e:
-                            import traceback
-                            st.error(f"❌ TAB4 Erreur lors de l'analyse CWT: {str(e)}")
-                            st.error(traceback.format_exc())  # Affiche la trace complète  #----------------------------------------------
+                   st.subheader("🌊 Analyse par Ondelettes")
+                   # Vérification de la disponibilité du signal traité
+                   if 'signal_processed' not in st.session_state:
+                        st.error("❌ Veuillez d'abord traiter le signal dans l'onglet 'Traitement'")
+                   else:
+                        signal_processed = st.session_state.signal_processed
+                        fs = st.session_state.fs
+                        time = st.session_state.time
+                   # Vérification que le signal n'est pas vide
+                   if len(signal_processed) == 0:
+                        st.error("Le signal traité est vide. Veuillez vérifier le traitement.")
+                   else:
+                       # Définition des scales localement dans cet onglet
+                        scales = np.arange(
+                            wavelet_params['scale_min'], 
+                            wavelet_params['scale_max'], 
+                            wavelet_params['scale_step']
+                        )
+                   if st.button("🚀 Lancer l'Analyse CWT", type="primary"):
+                        with st.spinner("Calcul en cours..."):
+                            try:
+                                # Calcul de la CWT
+                                coeffs, freqs_cwt = pywt.cwt(
+                                    signal_processed, 
+                                    scales, 
+                                    wavelet_params['type'], 
+                                    sampling_period=1/fs
+                                )
+                                
+                                # Création du scalogramme amélioré
+                                fig_cwt = go.Figure()
+                                
+                                # Scalogramme principal
+                                fig_cwt.add_trace(go.Heatmap(
+                                    z=20*np.log10(np.abs(coeffs) + 1e-12),  # En dB
+                                    x=time,
+                                    y=freqs_cwt,
+                                    colorscale='Jet',
+                                    colorbar=dict(title="Amplitude (dB)"),
+                                    hoverongaps=False
+                                ))
+                                
+                                # Récupération des fréquences caractéristiques si disponibles
+                                frequencies = st.session_state.get('frequencies', {})
+                                
+                                # Ajout des fréquences caractéristiques
+                                freq_colors = {
+                                    'FTF': 'violet', 'BSF': 'green', 
+                                    'BPFO': 'blue', 'BPFI': 'red'
+                                }
+                                
+                                # Options d'affichage
+                                display_opts = {
+                                    'FTF': st.session_state.get('show_ftf', False),
+                                    'BSF': st.session_state.get('show_bsf', False),
+                                    'BPFO': st.session_state.get('show_bpfo', False),
+                                    'BPFI': st.session_state.get('show_bpfi', False),
+                                }
+                                
+                                for freq_type, show in display_opts.items():
+                                    if show and freq_type in frequencies:
+                                        freq_val = frequencies[freq_type]
+                                        
+                                        # Ligne principale
+                                        fig_cwt.add_hline(
+                                            y=freq_val,
+                                            line=dict(color=freq_colors[freq_type], width=2, dash='dot'),
+                                            annotation_text=freq_type,
+                                            annotation_position="right"
+                                        )
+                                        
+                                fig_cwt.update_layout(
+                                    title="Scalogramme - Transformée en Ondelettes Continue",
+                                    xaxis_title="Temps (s)",
+                                    yaxis_title="Fréquence (Hz)",
+                                    height=600,
+                                    yaxis_type='log' if st.checkbox("Échelle log") else 'linear'
+                                )
+                                
+                                st.plotly_chart(fig_cwt, use_container_width=True)
+                                
+                            except Exception as e:
+                                st.error(f"❌TAB4 Erreur lors de l'analyse CWT: {str(e)}")
+# ... (le reste du code) ...
             with tab5:
                 st.subheader("📈 Diagnostic Automatisé")
                 
