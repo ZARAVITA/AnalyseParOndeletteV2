@@ -411,7 +411,7 @@ def main():
                 
                 with col3:
                     st.metric("Skewness", f"{stats['Skewness']:.2f}")
-                    st.metric("Energy", f"{stats['Energy']:.1e}")
+                    st.metric("Energie", f"{stats['Energy']:.1e}")
             
             with tab2:
                 st.subheader("🔍 Signal Original")
