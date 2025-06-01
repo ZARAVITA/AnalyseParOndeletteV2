@@ -742,6 +742,22 @@ def main():
                                 wavelet_params['scale_max'], 
                                 wavelet_params['scale_step']
                             )
+                            #------------------------------------------------------------------------------------------------------------NouvDisplay
+                            # Récupération des paramètres depuis session_state
+                            display_opts = {
+                                'FTF': st.session_state.get('show_ftf', False),
+                                'BSF': st.session_state.get('show_bsf', False),
+                                'BPFO': st.session_state.get('show_bpfo', False),
+                                'BPFI': st.session_state.get('show_bpfi', False),
+                                'harmonics': st.session_state.get('show_harmonics', False),
+                                'harmonics_count': st.session_state.get('harmonics_count', 3),
+                                'show_speed_harmonics': st.session_state.get('show_speed_harmonics', False),
+                                'speed_harmonics_count': st.session_state.get('speed_harmonics_count', 3),
+                                'speed_harmonics_color': st.session_state.get('speed_harmonics_color', "#FFA500")
+                            }
+                            #-----------------------------------------------------------------------------------------------------------FinNouvDisplay
+                            
+                            '''
                             display_opts = {
                               'FTF': show_ftf,
                               'BSF': show_bsf,
@@ -752,7 +768,7 @@ def main():
                               'show_speed_harmonics': show_speed_harmonics,
                               'speed_harmonics_count': speed_harmonics_count,
                               'speed_harmonics_color': speed_harmonics_color
-                            }
+                            } '''
                             coeffs, freqs_cwt = pywt.cwt(
                                 signal_processed, 
                                 scales, 
