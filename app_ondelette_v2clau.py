@@ -819,6 +819,162 @@ def main():
                             )
                             
                             st.plotly_chart(fig_cwt, use_container_width=True)
+                                            # Affichage du scalogramme amélioré
+                st.plotly_chart(fig_cwt, use_container_width=True)
+                
+                ########################################################################
+                # NOUVELLE SECTION: ANALYSE À FRÉQUENCE SPÉCIFIQUE
+                ########################################################################
+                st.subheader("🎯 Analyse à Fréquence Spécifique")
+                
+                # Sélection de la fréquence d'analyse
+                min_freq = float(np.min(freqs_cwt))
+                max_freq = float(np.max(freqs_cwt))
+                
+                # Valeur par défaut intelligente
+                default_freq = frequencies.get('BPFO', min_freq + (max_freq - min_freq)/3)
+                
+                selected_freq = st.slider(
+                    "Sélectionnez une fréquence pour l'analyse (Hz)",
+                    min_value=min_freq,
+                    max_value=max_freq,
+                    value=default_freq,
+                    step=0.1,
+                    format="%.1f"
+                )
+                
+                # Trouver l'index le plus proche de la fréquence sélectionnée
+                idx_freq = np.abs(freqs_cwt - selected_freq).argmin()
+                coeffs_at_freq = coeffs[idx_freq, :]
+                
+                # Graphique des coefficients à cette fréquence
+                fig_freq = go.Figure()
+                fig_freq.add_trace(go.Scatter(
+                    x=time,
+                    y=np.abs(coeffs_at_freq),
+                    mode='lines',
+                    name=f'Fréquence {freqs_cwt[idx_freq]:.1f} Hz',
+                    line=dict(width=2),
+                    hovertemplate='Temps: %{x:.3f} s<br>Amplitude: %{y:.2f}<extra></extra>'
+                ))
+                
+                # Ajouter les lignes verticales pour les fréquences caractéristiques
+                for freq_type, freq_val in frequencies.items():
+                    if freq_val < max_freq and freq_val > min_freq:
+                        fig_freq.add_vline(
+                            x=freq_val,
+                            line_dash="dash",
+                            line_color=freq_colors.get(freq_type, 'gray'),
+                            annotation_text=freq_type,
+                            annotation_position="top"
+                        )
+                
+                fig_freq.update_layout(
+                    title=f'Coefficients d\'ondelettes à {freqs_cwt[idx_freq]:.1f} Hz',
+                    xaxis_title='Temps (s)',
+                    yaxis_title='Amplitude',
+                    height=400
+                )
+                
+                st.plotly_chart(fig_freq, use_container_width=True)
+                
+                ########################################################################
+                # ANALYSE DE L'ENVELOPPE
+                ########################################################################
+                st.subheader("📊 Analyse de l'Enveloppe du Signal")
+                
+                # Calcul de l'enveloppe du signal à cette fréquence
+                envelope = np.abs(coeffs_at_freq)
+                
+                # FFT de l'enveloppe pour détecter les fréquences de modulation
+                n = len(envelope)
+                fft_envelope = np.fft.fft(envelope)
+                freqs_envelope = np.fft.fftfreq(n, d=1/fs)[:n//2]
+                fft_magnitude = 2.0/n * np.abs(fft_envelope[0:n//2])
+                
+                # Graphique de la FFT de l'enveloppe
+                fig_envelope_fft = go.Figure()
+                fig_envelope_fft.add_trace(go.Scatter(
+                    x=freqs_envelope,
+                    y=fft_magnitude,
+                    mode='lines',
+                    name='FFT de l\'enveloppe',
+                    line=dict(width=2),
+                    hovertemplate='Fréquence: %{x:.1f} Hz<br>Amplitude: %{y:.2f}<extra></extra>'
+                ))
+                
+                # Ajouter les fréquences caractéristiques
+                for freq_type, freq_val in frequencies.items():
+                    if freq_val < max(freqs_envelope) and freq_val > min(freqs_envelope):
+                        fig_envelope_fft.add_vline(
+                            x=freq_val,
+                            line_dash="dash",
+                            line_color=freq_colors.get(freq_type, 'gray'),
+                            annotation_text=freq_type,
+                            annotation_position="top"
+                        )
+                
+                # Ajouter les harmoniques de vitesse
+                if show_speed_harmonics:
+                    for h in range(1, speed_harmonics_count + 1):
+                        harmonic_freq = h * custom_hz
+                        fig_envelope_fft.add_vline(
+                            x=harmonic_freq,
+                            line_dash="dash",
+                            line_color=speed_harmonics_color,
+                            annotation_text=f"{h}×Vit. Rot.",
+                            annotation_position="bottom"
+                        )
+                
+                fig_envelope_fft.update_layout(
+                    title='FFT de l\'enveloppe du signal à la fréquence sélectionnée',
+                    xaxis_title='Fréquence (Hz)',
+                    yaxis_title='Amplitude',
+                    height=400
+                )
+                
+                st.plotly_chart(fig_envelope_fft, use_container_width=True)
+                
+                ########################################################################
+                # INTERPRÉTATION DES RÉSULTATS
+                ########################################################################
+                st.subheader("🔍 Interprétation des Résultats")
+                
+                # Trouver le pic principal dans la FFT de l'enveloppe
+                main_peak_idx = np.argmax(fft_magnitude)
+                main_peak_freq = freqs_envelope[main_peak_idx]
+                main_peak_amp = fft_magnitude[main_peak_idx]
+                
+                # Comparer avec les fréquences caractéristiques
+                closest_freq = ""
+                min_diff = float('inf')
+                for freq_type, freq_val in frequencies.items():
+                    diff = abs(main_peak_freq - freq_val)
+                    if diff < min_diff:
+                        min_diff = diff
+                        closest_freq = freq_type
+                
+                # Calculer le pourcentage d'écart
+                deviation = min_diff / frequencies[closest_freq] * 100 if frequencies[closest_freq] != 0 else 100
+                
+                # Afficher les conclusions
+                if main_peak_amp > np.mean(fft_magnitude) * 5:  # Seuil d'amplitude significative
+                    if deviation < 5:  # Écart de moins de 5%
+                        st.success(f"✅ Forte corrélation détectée avec la fréquence {closest_freq} ({frequencies[closest_freq]:.2f} Hz)")
+                        st.markdown(f"""
+                        **Diagnostic préliminaire:**
+                        - Modulation détectée à **{main_peak_freq:.2f} Hz** (écart: {deviation:.1f}%)
+                        - Correspond à la fréquence caractéristique **{closest_freq}**
+                        - Suggère un défaut de type **{get_fault_type(closest_freq)}**
+                        """)
+                    else:
+                        st.warning(f"⚠️ Modulation détectée à {main_peak_freq:.2f} Hz (écart: {deviation:.1f}% avec {closest_freq})")
+                else:
+                    st.info("ℹ️ Aucune modulation significative détectée dans la bande de fréquence analysée")
+                
+            except Exception as e:
+                st.error(f"❌ Erreur lors de l'analyse CWT: {str(e)}")
+
                             
                         except Exception as e:
                             st.error(f"❌ TAB4 Erreur lors de l'analyse CWT: {str(e)}")
